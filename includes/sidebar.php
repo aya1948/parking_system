@@ -31,7 +31,8 @@ $role = $user['role'];
   <ul class="nav flex-column">
     <li><a class="nav-link" href="/parking_system/index.php?action=owner_dashboard"><i class="bi bi-house-door"></i> Dashboard</a></li>
     <li><a class="nav-link" href="/parking_system/index.php?action=my_spots"><i class="bi bi-geo-alt"></i> My Spots</a></li>
-    <li><a class="nav-link" href="/parking_system/index.php?action=add_spot"><i class="bi bi-plus-circle"></i> Add New Spot</a></li>
+    <li><a class="nav-link" href="/parking_system/index.php?action=add_spot"><i class="bi bi-plus-circle"></i> Add Spot</a></li>
+    <li><a class="nav-link" href="/parking_system/index.php?action=add_garage"><i class="bi bi-building"></i> Add Garage</a></li>
     <li><a class="nav-link" href="/parking_system/index.php?action=owner_reservations"><i class="bi bi-calendar3"></i> Reservations</a></li>
     <li><a class="nav-link" href="/parking_system/index.php?action=earnings"><i class="bi bi-wallet2"></i> Earnings</a></li>
     <li><a class="nav-link" href="/parking_system/index.php?action=owner_report"><i class="bi bi-file-earmark-bar-graph"></i> Reports</a></li>

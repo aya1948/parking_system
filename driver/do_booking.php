@@ -27,7 +27,7 @@ $result = $resObj->createReservation($data);
 
 if ($result['success']) {
     setFlash('success', "Booking confirmed! Total: {$result['total']} EGP. Your QR code is ready.");
-    header("Location: /parking_system/index.php?action=my_reservations");
+    header("Location: " . BASE_URL . "/index.php?action=booking_receipt&id=" . $result['reservation_id']);
 } else {
     setFlash('error', $result['message']);
     header("Location: /parking_system/index.php?action=book_spot&id={$data['spot_id']}");

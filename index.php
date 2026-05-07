@@ -65,6 +65,9 @@ $routeFiles = [
     'owner_report'       => 'owner/report.php',
     'verify_spot'        => 'owner/verify_spot.php',
     'market_rate'        => 'owner/market_rate.php',
+    'add_garage'         => 'owner/add_garage.php',
+    'garage_map'         => 'owner/garage_map.php',
+    'booking_receipt'    => 'driver/booking_receipt.php',
 
     // Admin
     'admin_dashboard'    => 'admin/dashboard.php',
