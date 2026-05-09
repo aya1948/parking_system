@@ -1,4 +1,6 @@
 <?php
+date_default_timezone_set('Africa/Cairo');   // ← ضبط التوقيت للقاهرة
+
 // index.php — Main Front Controller / Router
 require_once __DIR__ . '/config/session.php';
 
@@ -68,6 +70,7 @@ $routeFiles = [
     'add_garage'         => 'owner/add_garage.php',
     'garage_map'         => 'owner/garage_map.php',
     'booking_receipt'    => 'driver/booking_receipt.php',
+    'pick_spot'          => 'driver/pick_spot.php',
 
     // Admin
     'admin_dashboard'    => 'admin/dashboard.php',

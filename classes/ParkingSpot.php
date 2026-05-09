@@ -30,9 +30,11 @@ class ParkingSpot {
 
     public function getSpotById(int $spotId): ?array {
         $stmt = $this->db->prepare("
-            SELECT s.*, u.full_name AS owner_name, u.phone AS owner_phone
+            SELECT s.*, u.full_name AS owner_name, u.phone AS owner_phone,
+                   g.name AS garage_name, g.garage_id
             FROM parking_spots s
             JOIN users u ON s.owner_id = u.user_id
+            LEFT JOIN garages g ON s.garage_id = g.garage_id
             WHERE s.spot_id = ?
         ");
         $stmt->execute([$spotId]);
@@ -88,6 +90,8 @@ class ParkingSpot {
         $sql = "
             SELECT s.*, u.full_name AS owner_name,
                    ROUND(s.trust_score, 1) AS trust_score,
+                   g.name AS garage_name,
+                   s.spot_number,
                    CASE
                      WHEN EXISTS (
                        SELECT 1 FROM reservations r
@@ -107,6 +111,7 @@ class ParkingSpot {
                    ) AS next_available_at
             FROM parking_spots s
             JOIN users u ON s.owner_id = u.user_id
+            LEFT JOIN garages g ON s.garage_id = g.garage_id
             WHERE s.status = 'available'
               AND s.is_verified = 1
         ";

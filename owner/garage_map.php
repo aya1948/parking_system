@@ -96,20 +96,12 @@ require_once __DIR__ . '/../includes/header.php';
             };
           ?>
           <div class="text-center" style="min-width:70px;">
-            <?php if ($spot['real_status'] === 'available'): ?>
-            <a href="<?= $b ?>/index.php?action=book_spot&id=<?= $spot['spot_id'] ?>"
-               class="btn btn-<?= $color ?> btn-sm fw-bold px-2 py-2 d-block"
-               title="Book <?= htmlspecialchars($spot['spot_number']) ?>">
+            <div class="btn btn-<?= $color ?> btn-sm fw-bold px-2 py-2 d-block position-relative"
+                 title="<?= htmlspecialchars($spot['spot_number']) ?> — <?= ucfirst($spot['real_status']) ?>"
+                 data-bs-toggle="tooltip">
               <?= $icon ?><br>
-              <small><?= htmlspecialchars($spot['spot_number']) ?></small>
-            </a>
-            <?php else: ?>
-            <div class="btn btn-<?= $color ?> btn-sm fw-bold px-2 py-2 d-block"
-                 style="cursor:default;" title="<?= ucfirst($spot['real_status']) ?>">
-              <?= $icon ?><br>
-              <small><?= htmlspecialchars($spot['spot_number']) ?></small>
+              <small class="font-monospace"><?= htmlspecialchars($spot['spot_number']) ?></small>
             </div>
-            <?php endif; ?>
           </div>
           <?php endforeach; ?>
         </div>
@@ -120,4 +112,10 @@ require_once __DIR__ . '/../includes/header.php';
   </div>
 
 </div></div></div>
+<script>
+// Enable Bootstrap tooltips
+document.querySelectorAll('[data-bs-toggle="tooltip"]').forEach(el => {
+    new bootstrap.Tooltip(el);
+});
+</script>
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

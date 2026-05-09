@@ -6,7 +6,7 @@ require_once __DIR__ . '/../classes/ParkingSpot.php';
 require_once __DIR__ . '/../classes/Vehicle.php';
 require_once __DIR__ . '/../classes/Pricing.php';
 
-$pageTitle = 'Book Parking — CitySlot';
+$pageTitle = 'Book Parking — Rakna';
 $user      = currentUser();
 $spotId    = (int)($_GET['id'] ?? 0);
 $spotObj   = new ParkingSpot();
@@ -14,6 +14,9 @@ $vehObj    = new Vehicle();
 $pricing   = new Pricing();
 
 $spot      = $spotObj->getSpotById($spotId);
+// Pre-fill times if coming from pick_spot page
+$preStart  = $_GET['start_time'] ?? '';
+$preEnd    = $_GET['end_time']   ?? '';
 if (!$spot || !$spotObj->isVisibleInSearch($spotId)) {
     setFlash('error', 'Spot not found or unavailable.');
     header('Location: /parking_system/index.php?action=search_spots'); exit;
@@ -23,22 +26,45 @@ $vehicles    = $vehObj->listUserVehicles($user['user_id']);
 $marketRate  = $spotObj->suggestMarketRate($spotId);
 $promoResult = null;
 
-// AJAX price preview
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['preview'])) {
-    header('Content-Type: application/json');
-    $start = $_POST['start_time'] ?? '';
-    $end   = $_POST['end_time']   ?? '';
-    $promo = $_POST['promo_code'] ?? null;
-    if ($start && $end) {
-        echo json_encode($pricing->calculateTotal($spotId, $start, $end, $user['user_id'], $promo));
-    } else {
-        echo json_encode(['error' => 'Invalid times']);
-    }
-    exit;
-}
-
 require_once __DIR__ . '/../includes/header.php';
 ?>
+<style>
+/* ألوان Rakna */
+.btn-primary {
+    background-color: #480959;
+    border-color: #480959;
+}
+.btn-primary:hover {
+    background-color: #8A2888;
+    border-color: #8A2888;
+}
+.btn-outline-secondary {
+    color: #480959;
+    border-color: #480959;
+}
+.btn-outline-secondary:hover {
+    background-color: #480959;
+    color: #fff;
+}
+.text-primary {
+    color: #480959 !important;
+}
+.card-header {
+    background-color: #480959;
+    color: #fff;
+    font-weight: bold;
+}
+.breadcrumb .active {
+    color: #480959;
+}
+.badge.bg-dark {
+    background-color: #480959 !important;
+}
+.text-success {
+    color: #480959 !important;
+}
+</style>
+
 <div class="container-fluid px-0">
 <div class="row g-0">
 <?php require_once __DIR__ . '/../includes/sidebar.php'; ?>
@@ -56,7 +82,17 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="col-md-5">
       <div class="card">
         <div class="card-body">
-          <h5 class="fw-bold"><?= htmlspecialchars($spot['title']) ?></h5>
+          <?php if (!empty($spot['garage_name'] ?? '')): ?>
+          <div class="small text-muted mb-1">
+            <i class="bi bi-building me-1"></i><?= htmlspecialchars($spot['garage_name'] ?? '') ?>
+          </div>
+          <?php endif; ?>
+          <h5 class="fw-bold">
+            <?php if (!empty($spot['spot_number'] ?? '')): ?>
+            <span class="badge bg-dark font-monospace me-1"><?= htmlspecialchars($spot['spot_number']) ?></span>
+            <?php endif; ?>
+            <?= htmlspecialchars($spot['title']) ?>
+          </h5>
           <p class="text-muted"><i class="bi bi-geo-alt me-1"></i><?= htmlspecialchars($spot['address']) ?></p>
           <hr>
           <div class="row g-2 mb-3">
@@ -95,7 +131,7 @@ require_once __DIR__ . '/../includes/header.php';
     <!-- BOOKING FORM -->
     <div class="col-md-7">
       <div class="card">
-        <div class="card-header">📅 Reserve Your Spot</div>
+        <div class="card-header"><i class="bi bi-calendar-check me-1"></i> Reserve Your Spot</div>
         <div class="card-body">
           <form action="/parking_system/index.php?action=do_booking" method="POST" id="bookingForm">
             <input type="hidden" name="spot_id" value="<?= $spotId ?>">
@@ -108,7 +144,8 @@ require_once __DIR__ . '/../includes/header.php';
               </div>
               <div class="col-md-6">
                 <label class="form-label">End Date & Time</label>
-                <input type="datetime-local" name="end_time" id="endTime" class="form-control" required>
+                <input type="datetime-local" name="end_time" id="endTime" class="form-control" required
+                       value="<?= $preEnd ? date('Y-m-d\TH:i', strtotime($preEnd)) : '' ?>">
               </div>
             </div>
 
@@ -136,21 +173,11 @@ require_once __DIR__ . '/../includes/header.php';
               </div>
             </div>
 
-            <!-- PRICE PREVIEW BOX -->
-            <div class="card bg-light mb-3" id="pricePreview" style="display:none;">
-              <div class="card-body">
-                <h6 class="fw-bold mb-3">💰 Price Breakdown</h6>
-                <div class="d-flex justify-content-between small"><span>Base Price</span><span id="previewBase">—</span></div>
-                <div class="d-flex justify-content-between small"><span>Peak Multiplier</span><span id="previewPeak">—</span></div>
-                <div class="d-flex justify-content-between small text-success"><span>Promo Discount</span><span id="previewPromo">—</span></div>
-                <div class="d-flex justify-content-between small text-muted"><span>VAT (14%)</span><span id="previewVat">—</span></div>
-                <hr class="my-2">
-                <div class="d-flex justify-content-between fw-bold"><span>Total</span><span id="previewTotal" class="text-primary">—</span></div>
-              </div>
+            <div class="alert alert-info small mb-3">
+              <i class="bi bi-receipt me-1"></i>
+              A full price breakdown receipt (including VAT 14%) will be shown after booking.
             </div>
-
-            <button type="button" class="btn btn-outline-primary w-100 mb-2" id="calcPrice">Calculate Price</button>
-            <button type="submit" class="btn btn-primary w-100" <?= empty($vehicles) ? 'disabled' : '' ?>>
+            <button type="submit" class="btn btn-primary w-100 btn-lg" <?= empty($vehicles) ? 'disabled' : '' ?>>
               <i class="bi bi-check-circle me-1"></i> Confirm Booking
             </button>
           </form>
@@ -162,31 +189,4 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 </div>
 
-<script>
-async function fetchPrice() {
-    const start = document.getElementById('startTime').value;
-    const end   = document.getElementById('endTime').value;
-    const promo = document.getElementById('promoCode').value;
-    if (!start || !end) return alert('Please select start and end times first.');
-
-    const form = new FormData();
-    form.append('preview', '1');
-    form.append('start_time', start);
-    form.append('end_time', end);
-    form.append('promo_code', promo);
-
-    const res  = await fetch(`/index.php?action=book_spot&id=<?= $spotId ?>`, {method:'POST', body: form});
-    const data = await res.json();
-    if (data.error) return alert(data.error);
-
-    document.getElementById('pricePreview').style.display = 'block';
-    document.getElementById('previewBase').textContent  = data.base_price + ' EGP';
-    document.getElementById('previewPeak').textContent  = 'x' + data.peak_multiplier;
-    document.getElementById('previewPromo').textContent = '-' + data.promo_discount + ' EGP';
-    document.getElementById('previewVat').textContent   = data.vat + ' EGP';
-    document.getElementById('previewTotal').textContent = data.total + ' EGP';
-}
-document.getElementById('calcPrice').addEventListener('click', fetchPrice);
-document.getElementById('applyPromo').addEventListener('click', fetchPrice);
-</script>
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

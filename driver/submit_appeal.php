@@ -4,7 +4,7 @@ require_once __DIR__ . '/../config/session.php';
 requireRole('driver');
 require_once __DIR__ . '/../classes/Fine.php';
 
-$pageTitle = 'Submit Appeal — CitySlot';
+$pageTitle = 'Submit Appeal — Rakna';
 $user      = currentUser();
 $fineObj   = new Fine();
 $fineId    = (int)($_GET['fine_id'] ?? 0);
@@ -38,34 +38,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
+<style>
+/* ألوان Rakna */
+.btn-warning {
+    background-color: #480959;
+    border-color: #480959;
+    color: #fff;
+}
+.btn-warning:hover {
+    background-color: #8A2888;
+    border-color: #8A2888;
+    color: #fff;
+}
+.card-header {
+    background-color: #480959;
+    color: #fff;
+    font-weight: bold;
+}
+</style>
+
 <div class="container-fluid px-0"><div class="row g-0">
 <?php require_once __DIR__ . '/../includes/sidebar.php'; ?>
 <div class="col-md-10 p-4">
   <div class="row justify-content-center">
     <div class="col-md-6">
       <div class="card">
-        <div class="card-header fw-bold">⚖️ Appeal Fine #<?= $fineId ?></div>
+        <div class="card-header"><i class="bi bi-shield-check me-1"></i> Appeal Fine #<?= $fineId ?></div>
         <div class="card-body">
           <!-- Fine summary -->
           <div class="alert alert-warning">
-            <strong>Fine Amount:</strong> <?= number_format($fine['amount'],2) ?> EGP<br>
-            <strong>Spot:</strong> <?= htmlspecialchars($fine['spot_title']) ?><br>
-            <strong>Type:</strong> <?= ucfirst(str_replace('_',' ',$fine['fine_type'])) ?><br>
-            <strong>Issued:</strong> <?= date('M d, Y', strtotime($fine['issued_at'])) ?>
+            <strong><i class="bi bi-cash-stack me-1"></i>Fine Amount:</strong> <?= number_format($fine['amount'],2) ?> EGP<br>
+            <strong><i class="bi bi-geo-alt me-1"></i>Spot:</strong> <?= htmlspecialchars($fine['spot_title']) ?><br>
+            <strong><i class="bi bi-tag me-1"></i>Type:</strong> <?= ucfirst(str_replace('_',' ',$fine['fine_type'])) ?><br>
+            <strong><i class="bi bi-calendar-event me-1"></i>Issued:</strong> <?= date('M d, Y', strtotime($fine['issued_at'])) ?>
           </div>
 
           <form method="POST" enctype="multipart/form-data">
             <div class="mb-3">
-              <label class="form-label fw-semibold">Describe your appeal *</label>
+              <label class="form-label fw-semibold"><i class="bi bi-pencil-square me-1"></i>Describe your appeal *</label>
               <textarea name="description" class="form-control" rows="5"
                 placeholder="Explain why this fine should be waived. Include any relevant details..." required></textarea>
             </div>
             <div class="mb-4">
-              <label class="form-label fw-semibold">Upload Evidence <span class="text-muted">(optional)</span></label>
+              <label class="form-label fw-semibold"><i class="bi bi-paperclip me-1"></i>Upload Evidence <span class="text-muted">(optional)</span></label>
               <input type="file" name="evidence" class="form-control" accept=".jpg,.jpeg,.png,.pdf">
               <small class="text-muted">Accepted: JPG, PNG, PDF. Max 5MB.</small>
             </div>
-            <button type="submit" class="btn btn-warning w-100 fw-bold">Submit Appeal</button>
+            <button type="submit" class="btn btn-warning w-100 fw-bold"><i class="bi bi-send-check me-1"></i>Submit Appeal</button>
           </form>
         </div>
       </div>

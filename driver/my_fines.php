@@ -4,17 +4,43 @@ require_once __DIR__ . '/../config/session.php';
 requireRole('driver');
 require_once __DIR__ . '/../classes/Fine.php';
 
-$pageTitle = 'My Fines — CitySlot';
+$pageTitle = 'My Fines — Rakna';
 $user      = currentUser();
 $fineObj   = new Fine();
 $fines     = $fineObj->listDriverFines($user['user_id']);
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
+<style>
+/* ألوان Rakna */
+.btn-danger {
+    background-color: #480959;
+    border-color: #480959;
+}
+.btn-danger:hover {
+    background-color: #8A2888;
+    border-color: #8A2888;
+}
+.btn-outline-warning {
+    color: #480959;
+    border-color: #480959;
+}
+.btn-outline-warning:hover {
+    background-color: #480959;
+    color: #fff;
+}
+.table-hover tbody tr:hover {
+    background-color: #f3e5f5;
+}
+.text-danger {
+    color: #480959 !important;
+}
+</style>
+
 <div class="container-fluid px-0"><div class="row g-0">
 <?php require_once __DIR__ . '/../includes/sidebar.php'; ?>
 <div class="col-md-10 p-4">
-  <h4 class="fw-bold mb-4">⚠️ My Fines</h4>
+  <h4 class="fw-bold mb-4"><i class="bi bi-exclamation-triangle-fill me-2"></i>My Fines</h4>
 
   <?php if (empty($fines)): ?>
     <div class="alert alert-success"><i class="bi bi-check-circle me-2"></i>No fines on your record. Keep parking responsibly!</div>

@@ -4,7 +4,7 @@ require_once __DIR__ . '/../config/session.php';
 requireRole('driver');
 require_once __DIR__ . '/../classes/Reservation.php';
 
-$pageTitle = 'Extend Reservation — CitySlot';
+$pageTitle = 'Extend Reservation — Rakna';
 $user      = currentUser();
 $resObj    = new Reservation();
 $id        = (int)($_GET['id'] ?? 0);
@@ -18,13 +18,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
+<style>
+/* ألوان Rakna */
+.btn-primary {
+    background-color: #480959;
+    border-color: #480959;
+}
+.btn-primary:hover {
+    background-color: #8A2888;
+    border-color: #8A2888;
+}
+.card-header {
+    background-color: #480959;
+    color: #fff;
+    font-weight: bold;
+}
+</style>
+
 <div class="container-fluid px-0"><div class="row g-0">
 <?php require_once __DIR__ . '/../includes/sidebar.php'; ?>
 <div class="col-md-10 p-4">
   <div class="row justify-content-center">
     <div class="col-md-5">
       <div class="card">
-        <div class="card-header fw-bold">⏱️ Extend Parking Session</div>
+        <div class="card-header"><i class="bi bi-hourglass-split me-1"></i> Extend Parking Session</div>
         <div class="card-body">
           <form method="POST">
             <div class="mb-3">

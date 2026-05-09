@@ -1,6 +1,6 @@
 <?php
 // auth/login.php
-$pageTitle = 'Login — CitySlot';
+$pageTitle = 'Login — Rakna';
 require_once __DIR__ . '/../config/session.php';
 if (isLoggedIn()) { header('Location: /parking_system/index.php'); exit; }
 ?>
@@ -12,9 +12,24 @@ if (isLoggedIn()) { header('Location: /parking_system/index.php'); exit; }
   <title><?= $pageTitle ?></title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
   <style>
-    body { background: linear-gradient(135deg, #0d1b2a 0%, #1a73e8 100%); min-height: 100vh; display: flex; align-items: center; }
+    /* خلفية متدرجة باللون الموف الغامق */
+  body {
+    background-image: url('/parking_system/assets/Gemini_Generated_Image_41ndl641ndl641nd.png');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+}
     .card { border: none; border-radius: 16px; box-shadow: 0 20px 60px rgba(0,0,0,.3); }
-    .brand { font-size: 2rem; font-weight: 800; color: #1a73e8; }
+    .brand { font-size: 2rem; font-weight: 800; color: #480959; }
+    /* لون زر تسجيل الدخول موف غامق */
+    .btn-primary { background-color: #480959; border-color: #480959; }
+    .btn-primary:hover { background-color: #5e2b6d; border-color: #5e2b6d; }
+    /* لون الروابط */
+    a { color: #480959; }
+    a:hover { color: #5e2b6d; }
   </style>
 </head>
 <body>
@@ -23,8 +38,7 @@ if (isLoggedIn()) { header('Location: /parking_system/index.php'); exit; }
     <div class="col-md-4">
       <div class="card p-4">
         <div class="text-center mb-4">
-          <div class="brand">🅿️ CitySlot</div>
-          <p class="text-muted">Smart Urban Parking</p>
+          <div class="brand"><i class="bi bi-p-circle-fill me-2"></i>Rakna</div>
         </div>
         <?php
         $flash = getFlash();

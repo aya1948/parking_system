@@ -13,8 +13,8 @@ class Garage {
 
     public function createGarage(array $data): array {
         $stmt = $this->db->prepare("
-            INSERT INTO garages (owner_id, name, address, latitude, longitude, city_zone, total_floors, description)
-            VALUES (?,?,?,?,?,?,?,?)
+            INSERT INTO garages (owner_id, name, address, latitude, longitude, city_zone, total_floors, description, is_verified)
+            VALUES (?,?,?,?,?,?,?,?,1)
         ");
         $stmt->execute([
             $data['owner_id'],
@@ -198,4 +198,156 @@ class Garage {
             : 0;
         return $stats;
     }
+
+    // ─── NON-CRUD: Search Garages by Zone ────────────────────
+
+    /**
+     * Search garages grouped by city_zone.
+     * Returns garages with real-time available spots count,
+     * price range, and occupancy status.
+     * Shows ALL garages (even with 0 free spots).
+     */
+    public function searchGarages(array $filters): array {
+        $bufferMinutes = 10;
+        $searchStart   = $filters['start_time'] ?? date('Y-m-d H:i:s');
+        $searchEnd     = $filters['end_time']   ?? date('Y-m-d H:i:s', strtotime('+1 hour'));
+
+        $sql = "
+            SELECT g.*,
+                   u.full_name AS owner_name,
+                   COUNT(DISTINCT s.spot_id) AS total_spots,
+
+                   SUM(CASE
+                     WHEN s.spot_id IS NOT NULL
+                       AND s.status = 'available'
+                       AND NOT EXISTS (
+                         SELECT 1 FROM reservations r
+                         WHERE r.spot_id = s.spot_id
+                           AND r.status IN ('confirmed','active','extended','pending')
+                           AND r.start_time  < DATE_ADD(?, INTERVAL ? MINUTE)
+                           AND DATE_ADD(r.end_time, INTERVAL ? MINUTE) > ?
+                       )
+                     THEN 1 ELSE 0
+                   END) AS free_spots,
+
+                   MIN(s.price_per_hour) AS min_price,
+                   MAX(s.price_per_hour) AS max_price,
+                   MAX(s.has_ev_charger) AS has_ev
+            FROM garages g
+            JOIN users u ON g.owner_id = u.user_id
+            LEFT JOIN parking_spots s ON s.garage_id = g.garage_id
+                AND s.status != 'maintenance'
+            WHERE g.is_verified = 1
+        ";
+
+        $params = [
+            $searchEnd, $bufferMinutes,
+            $bufferMinutes, $searchStart,
+        ];
+
+        if (!empty($filters['zone'])) {
+            $sql .= " AND g.city_zone LIKE ?";
+            $params[] = '%' . $filters['zone'] . '%';
+        }
+        if (!empty($filters['needs_ev'])) {
+            $sql .= " AND EXISTS (
+                SELECT 1 FROM parking_spots ps
+                WHERE ps.garage_id = g.garage_id AND ps.has_ev_charger = 1
+            )";
+        }
+        if (!empty($filters['max_price'])) {
+            $sql .= " AND EXISTS (
+                SELECT 1 FROM parking_spots ps
+                WHERE ps.garage_id = g.garage_id AND ps.price_per_hour <= ?
+            )";
+            $params[] = $filters['max_price'];
+        }
+        if (!empty($filters['vehicle_height'])) {
+            $sql .= " AND NOT EXISTS (
+                SELECT 1 FROM parking_spots ps
+                WHERE ps.garage_id = g.garage_id
+                  AND ps.max_height_cm IS NOT NULL
+                  AND ps.max_height_cm < ?
+            )";
+            $params[] = $filters['vehicle_height'];
+        }
+        if (!empty($filters['vehicle_width'])) {
+            $sql .= " AND NOT EXISTS (
+                SELECT 1 FROM parking_spots ps
+                WHERE ps.garage_id = g.garage_id
+                  AND ps.max_width_cm IS NOT NULL
+                  AND ps.max_width_cm < ?
+            )";
+            $params[] = $filters['vehicle_width'];
+        }
+
+        $sql .= " GROUP BY g.garage_id ORDER BY free_spots DESC, g.city_zone ASC LIMIT 50";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
+
+    // ─── NON-CRUD: List All Zones ─────────────────────────────
+
+    /**
+     * Returns distinct zones with garage count for filter dropdown.
+     */
+    public function listZones(): array {
+        // Show zones even for garages without spots yet
+        $stmt = $this->db->query("
+            SELECT city_zone, COUNT(*) AS garage_count
+            FROM garages
+            WHERE city_zone IS NOT NULL AND city_zone != ''
+            GROUP BY city_zone
+            ORDER BY city_zone ASC
+        ");
+        return $stmt->fetchAll();
+    }
+
+    // ─── NON-CRUD: Get Available Spots in Garage ──────────────
+
+    /**
+     * Returns available (free) spots in a garage for a given time window.
+     * Used when driver selects a garage to pick a specific spot.
+     */
+    public function getAvailableSpotsInGarage(int $garageId, string $start, string $end, array $vehicleFilters = []): array {
+        $bufferMinutes = 10;
+        $sql = "
+            SELECT s.*,
+                   CASE
+                     WHEN EXISTS (
+                       SELECT 1 FROM reservations r
+                       WHERE r.spot_id = s.spot_id
+                         AND r.status IN ('confirmed','active','extended','pending')
+                         AND r.start_time  < DATE_ADD(?, INTERVAL ? MINUTE)
+                         AND DATE_ADD(r.end_time, INTERVAL ? MINUTE) > ?
+                     ) THEN 'occupied'
+                     ELSE 'available'
+                   END AS real_status
+            FROM parking_spots s
+            WHERE s.garage_id = ?
+              AND s.status = 'available'
+        ";
+        $params = [$end, $bufferMinutes, $bufferMinutes, $start, $garageId];
+
+        if (!empty($vehicleFilters['height'])) {
+            $sql .= " AND (s.max_height_cm IS NULL OR s.max_height_cm >= ?)";
+            $params[] = $vehicleFilters['height'];
+        }
+        if (!empty($vehicleFilters['width'])) {
+            $sql .= " AND (s.max_width_cm IS NULL OR s.max_width_cm >= ?)";
+            $params[] = $vehicleFilters['width'];
+        }
+        if (!empty($vehicleFilters['needs_ev'])) {
+            $sql .= " AND s.has_ev_charger = 1";
+        }
+
+        $sql .= " ORDER BY s.spot_number ASC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll();
+    }
+
 }

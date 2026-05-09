@@ -4,17 +4,46 @@ require_once __DIR__ . '/../config/session.php';
 requireRole('admin');
 require_once __DIR__ . '/../classes/Report.php';
 
-$pageTitle = 'Admin Dashboard — CitySlot';
+$pageTitle = 'Admin Dashboard — Rakna';
 $user      = currentUser();
 $reportObj = new Report();
 $stats     = $reportObj->getSystemStats();
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
+
+<!-- تنسيق مخصص لأزرار Quick Actions (يطابق hover السايد بار) -->
+<style>
+.quick-action-btn {
+    background-color: #480959;
+    border-color: #480959;
+    color: #fff;
+    transition: 0.2s;
+    border-radius: 0.4rem;
+}
+.quick-action-btn:hover {
+    background-color: #8A2888;
+    border-color: #8A2888;
+    color: #ffffff;
+    border-left: 3px solid #a1abb9;
+}
+/* توحيد ألوان أيقونات بطاقات الوحدات مع الموف */
+.spot-card i {
+    color: #480959 !important;
+}
+.spot-card h6 {
+    color: #2c3e50;
+}
+/* حواف يسارية للبطاقات الإحصائية */
+.stat-card {
+    border-left: 4px solid #480959;
+}
+</style>
+
 <div class="container-fluid px-0"><div class="row g-0">
 <?php require_once __DIR__ . '/../includes/sidebar.php'; ?>
 <div class="col-md-10 p-4">
-  <h4 class="fw-bold mb-4">⚙️ System Administration</h4>
+  <h4 class="fw-bold mb-4">System Administration</h4>
 
   <!-- SYSTEM STATS -->
   <div class="row g-3 mb-4">
@@ -50,18 +79,17 @@ require_once __DIR__ . '/../includes/header.php';
   <div class="card mb-4 p-3">
     <h6 class="fw-bold mb-3">Quick Actions</h6>
     <div class="d-flex flex-wrap gap-2">
-      <a href="/parking_system/index.php?action=verifications" class="btn btn-primary btn-sm">
+      <a href="/parking_system/index.php?action=verifications" class="btn quick-action-btn btn-sm">
         <i class="bi bi-patch-check me-1"></i> Review Verifications
         <?php if ($stats['pending_verif'] > 0): ?><span class="badge bg-danger"><?= $stats['pending_verif'] ?></span><?php endif; ?>
       </a>
-      <a href="/parking_system/index.php?action=appeals" class="btn btn-warning btn-sm">
+      <a href="/parking_system/index.php?action=appeals" class="btn quick-action-btn btn-sm">
         <i class="bi bi-shield-check me-1"></i> Review Appeals
         <?php if ($stats['open_appeals'] > 0): ?><span class="badge bg-danger"><?= $stats['open_appeals'] ?></span><?php endif; ?>
       </a>
-      <a href="/parking_system/index.php?action=event_zones" class="btn btn-danger btn-sm"><i class="bi bi-bounding-box me-1"></i> Manage Event Zones</a>
-      <a href="/parking_system/index.php?action=heatmap" class="btn btn-outline-info btn-sm"><i class="bi bi-map me-1"></i> Revenue Heatmap</a>
-      <a href="/parking_system/index.php?action=sensor_health" class="btn btn-outline-secondary btn-sm"><i class="bi bi-activity me-1"></i> Sensor Health</a>
-      <a href="/parking_system/index.php?action=audit_log" class="btn btn-outline-dark btn-sm"><i class="bi bi-journal-text me-1"></i> Audit Log</a>
+      <a href="/parking_system/index.php?action=event_zones" class="btn quick-action-btn btn-sm"><i class="bi bi-bounding-box me-1"></i> Manage Event Zones</a>
+      <a href="/parking_system/index.php?action=heatmap" class="btn quick-action-btn btn-sm"><i class="bi bi-map me-1"></i> Revenue Heatmap</a>
+      <a href="/parking_system/index.php?action=audit_log" class="btn quick-action-btn btn-sm"><i class="bi bi-journal-text me-1"></i> Audit Log</a>
     </div>
   </div>
 
@@ -75,7 +103,6 @@ require_once __DIR__ . '/../includes/header.php';
       ['event_zones',     'bounding-box',    'warning',   'Event Zones',           'Lock city zones for events'],
       ['peak_rules',      'clock-history',   'info',      'Peak Hour Rules',       'Configure pricing multipliers'],
       ['promo_codes',     'tag',             'secondary', 'Promo Codes',           'Manage discount codes'],
-      ['sensor_health',   'activity',        'dark',      'Sensor Health',         'Monitor virtual IoT sensors'],
       ['heatmap',         'map',             'primary',   'Revenue Heatmap',       'Zone-level revenue analytics'],
     ];
     foreach ($modules as [$action, $icon, $color, $title, $desc]):
@@ -83,7 +110,7 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="col-md-3">
       <a href="/parking_system/index.php?action=<?= $action ?>" class="text-decoration-none">
         <div class="card h-100 spot-card p-3 text-center">
-          <i class="bi bi-<?= $icon ?> text-<?= $color ?>" style="font-size:2.5rem;"></i>
+          <i class="bi bi-<?= $icon ?>" style="font-size:2.5rem;"></i>
           <h6 class="fw-bold mt-2 mb-1"><?= $title ?></h6>
           <small class="text-muted"><?= $desc ?></small>
         </div>

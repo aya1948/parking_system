@@ -32,7 +32,7 @@ require_once __DIR__ . '/../includes/header.php';
   <div class="row justify-content-center">
     <div class="col-md-6">
       <div class="card">
-        <div class="card-header fw-bold">🚗 Add New Vehicle</div>
+        <div class="card-header fw-bold"> Add New Vehicle</div>
         <div class="card-body">
           <form method="POST">
             <div class="mb-3">

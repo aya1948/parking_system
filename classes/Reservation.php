@@ -8,7 +8,7 @@ class Reservation {
     private Pricing $pricing;
     private const BUFFER_MINUTES   = 10;  // Buffer between bookings
     private const GRACE_MINUTES    = 5;   // Late arrival grace period
-    private const EARLY_CHECKIN_LIMIT = 5; // Allowed minutes before start (NEW)
+    private const NOSHOW_THRESHOLD = 5;   // Minutes after start before no-show
 
     public function __construct() {
         $this->db      = getDB();
@@ -107,7 +107,12 @@ class Reservation {
     }
 
     public function listDriverReservations(int $driverId, string $status = ''): array {
-        $sql = "SELECT r.*, s.title AS spot_title, s.address FROM reservations r JOIN parking_spots s ON r.spot_id = s.spot_id WHERE r.driver_id = ?";
+        $sql = "SELECT r.*, s.title AS spot_title, s.address, s.spot_number,
+                       g.name AS garage_name
+                FROM reservations r
+                JOIN parking_spots s ON r.spot_id = s.spot_id
+                LEFT JOIN garages g ON s.garage_id = g.garage_id
+                WHERE r.driver_id = ?";
         $params = [$driverId];
         if ($status) { $sql .= " AND r.status = ?"; $params[] = $status; }
         $sql .= " ORDER BY r.start_time DESC";
@@ -123,9 +128,9 @@ class Reservation {
      * States: confirmed → active → completed
      * 
      * Allow check-in:
-     *   - Up to EARLY_CHECKIN_LIMIT min BEFORE start time
-     *   - Any time AFTER start time (within GRACE_MINUTES)
-     * No-show: only if > GRACE_MINUTES after start time with no check-in
+     *   - Up to 5 min BEFORE start time
+     *   - Any time AFTER start time (within grace period of 5 min)
+     * No-show: only if > 5 min AFTER start time with no check-in
      */
     public function qrCheckIn(string $qrCode): array {
         $stmt = $this->db->prepare("SELECT * FROM reservations WHERE qr_code = ?");
@@ -150,19 +155,19 @@ class Reservation {
 
         $now         = time();
         $startTime   = strtotime($res['start_time']);
-        $minutesDiff = round(($now - $startTime) / 60); // positive if late, negative if early
+        $minutesLate = ($now - $startTime) / 60; //양수 = بعد البداية، سالب = قبلها
 
-        // Too early: more than EARLY_CHECKIN_LIMIT minutes before start
-        if ($minutesDiff < -self::EARLY_CHECKIN_LIMIT) {
-            $waitMins = abs($minutesDiff) - self::EARLY_CHECKIN_LIMIT;
+        // Too early: أكتر من 5 دقايق قبل البداية
+        if ($now < ($startTime - 5 * 60)) {
+            $waitMins = round(($startTime - $now) / 60);
             return [
                 'success' => false,
-                'message' => "Too early! Check-in opens " . self::EARLY_CHECKIN_LIMIT . " minutes before your booking. Please wait about {$waitMins} minute(s)."
+                'message' => "Too early! Check-in opens 5 minutes before your booking. Please wait {$waitMins} more minute(s)."
             ];
         }
 
-        // No-show: more than GRACE_MINUTES minutes after start
-        if ($minutesDiff > self::GRACE_MINUTES) {
+        // No-show: أكتر من 5 دقايق بعد البداية من غير check-in
+        if ($minutesLate > self::GRACE_MINUTES) {
             $stmt = $this->db->prepare("UPDATE reservations SET status = 'no_show' WHERE reservation_id = ?");
             $stmt->execute([$res['reservation_id']]);
             return [
@@ -171,7 +176,7 @@ class Reservation {
             ];
         }
 
-        // ✅ Successful check-in (within allowed window)
+        // ✅ Check-in ناجح — في الوقت أو خلال الـ grace period
         $stmt = $this->db->prepare("
             UPDATE reservations 
             SET status = 'active', actual_checkin = NOW() 
@@ -179,8 +184,8 @@ class Reservation {
         ");
         $stmt->execute([$res['reservation_id']]);
 
-        $msg = $minutesDiff > 0
-            ? 'Check-in successful! (' . abs($minutesDiff) . ' minute(s) late — within grace period)'
+        $msg = $minutesLate > 0
+            ? 'Check-in successful! ('. round($minutesLate) .' minute(s) late — within grace period)'
             : 'Check-in successful! Welcome.';
 
         return ['success' => true, 'message' => $msg, 'reservation' => $res];
@@ -191,8 +196,9 @@ class Reservation {
         $stmt->execute([$qrCode]);
         $res = $stmt->fetch();
 
-        if (!$res || $res['status'] !== 'active') {
-            return ['success' => false, 'message' => 'No active reservation found for this QR code.'];
+        // Allow checkout for both 'active' AND 'extended' statuses
+        if (!$res || !in_array($res['status'], ['active', 'extended'])) {
+            return ['success' => false, 'message' => 'No active or extended reservation found for this QR code.'];
         }
 
         $now     = time();
@@ -209,9 +215,19 @@ class Reservation {
         $stmt = $this->db->prepare("UPDATE reservations SET status = 'completed', actual_checkout = NOW() WHERE reservation_id = ?");
         $stmt->execute([$res['reservation_id']]);
 
-        // Issue fine if overstayed
+        // Issue fine if overstayed + send notification
         if ($overstayMinutes > 0) {
             $this->issueOverstayFine($res['driver_id'], $res['spot_id'], $res['reservation_id'], $overstayMinutes, $penaltyAmount);
+            // Send overstay notification to driver
+            require_once __DIR__ . '/Notification.php';
+            $notif = new Notification();
+            $notif->send(
+                $res['driver_id'],
+                'penalty_alert',
+                'web',
+                'Overstay Fine Issued',
+                "You overstayed by {$overstayMinutes} minute(s). A fine of {$penaltyAmount} EGP has been added to your account."
+            );
         }
 
         // Release escrow to owner

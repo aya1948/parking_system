@@ -4,7 +4,7 @@ require_once __DIR__ . '/../config/session.php';
 requireRole('driver');
 require_once __DIR__ . '/../classes/Vehicle.php';
 
-$pageTitle = 'My Vehicles — CitySlot';
+$pageTitle = 'My Vehicles — Rakna';
 $user      = currentUser();
 $vehObj    = new Vehicle();
 
@@ -24,23 +24,60 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $vehicles = $vehObj->listUserVehicles($user['user_id']);
 require_once __DIR__ . '/../includes/header.php';
 ?>
+<style>
+/* ألوان Rakna */
+.btn-primary {
+    background-color: #480959;
+    border-color: #480959;
+}
+.btn-primary:hover {
+    background-color: #8A2888;
+    border-color: #8A2888;
+}
+.btn-outline-primary {
+    color: #480959;
+    border-color: #480959;
+}
+.btn-outline-primary:hover {
+    background-color: #480959;
+    color: #fff;
+}
+.btn-outline-danger {
+    color: #dc3545;
+    border-color: #dc3545;
+}
+.btn-outline-danger:hover {
+    background-color: #dc3545;
+    color: #fff;
+}
+.border-primary {
+    border-color: #480959 !important;
+}
+.badge.bg-primary {
+    background-color: #480959 !important;
+}
+.badge.bg-success {
+    background-color: #198754 !important;
+}
+</style>
+
 <div class="container-fluid px-0"><div class="row g-0">
 <?php require_once __DIR__ . '/../includes/sidebar.php'; ?>
 <div class="col-md-10 p-4">
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="fw-bold mb-0">🚗 My Vehicles</h4>
-    <a href="/parking_system/index.php?action=add_vehicle" class="btn btn-primary btn-sm">+ Add Vehicle</a>
+    <h4 class="fw-bold mb-0"><i class="bi bi-car-front-fill me-2"></i>My Vehicles</h4>
+    <a href="/parking_system/index.php?action=add_vehicle" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg me-1"></i> Add Vehicle</a>
   </div>
 
   <?php if (empty($vehicles)): ?>
-    <div class="alert alert-info">No vehicles added. <a href="/parking_system/index.php?action=add_vehicle">Add one now</a> to start booking.</div>
+    <div class="alert alert-info"><i class="bi bi-info-circle me-1"></i> No vehicles added. <a href="/parking_system/index.php?action=add_vehicle">Add one now</a> to start booking.</div>
   <?php else: ?>
   <div class="row g-3">
     <?php foreach ($vehicles as $v): ?>
     <div class="col-md-4">
       <div class="card <?= $v['is_default'] ? 'border-primary' : '' ?>">
         <div class="card-body">
-          <?php if ($v['is_default']): ?><span class="badge bg-primary mb-2">Default</span><?php endif; ?>
+          <?php if ($v['is_default']): ?><span class="badge bg-primary mb-2"><i class="bi bi-check-circle me-1"></i>Default</span><?php endif; ?>
           <h5 class="font-monospace"><?= htmlspecialchars($v['license_plate']) ?></h5>
           <p class="text-muted mb-1"><?= htmlspecialchars($v['make'] . ' ' . $v['model']) ?> — <?= htmlspecialchars($v['color']) ?></p>
           <p class="small mb-1">Type: <strong><?= ucfirst($v['vehicle_type']) ?></strong></p>
@@ -51,13 +88,13 @@ require_once __DIR__ . '/../includes/header.php';
             <form method="POST" class="d-inline">
               <input type="hidden" name="action" value="set_default">
               <input type="hidden" name="vehicle_id" value="<?= $v['vehicle_id'] ?>">
-              <button class="btn btn-sm btn-outline-primary">Set Default</button>
+              <button class="btn btn-sm btn-outline-primary"><i class="bi bi-star me-1"></i>Set Default</button>
             </form>
             <?php endif; ?>
             <form method="POST" class="d-inline" onsubmit="return confirm('Remove this vehicle?')">
               <input type="hidden" name="action" value="delete">
               <input type="hidden" name="vehicle_id" value="<?= $v['vehicle_id'] ?>">
-              <button class="btn btn-sm btn-outline-danger">Remove</button>
+              <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash3 me-1"></i>Remove</button>
             </form>
           </div>
         </div>

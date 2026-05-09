@@ -25,7 +25,7 @@ require_once __DIR__ . '/../includes/header.php';
       <div class="card">
         <div class="card-header fw-bold">✏️ Edit: <?= htmlspecialchars($spot['title']) ?></div>
         <div class="card-body">
-          <form action="/parking_system/index.php?action=do_edit_spot" method="POST">
+          <form action="/parking_system/index.php?action=do_edit_spot"<!-- calls updateSpot() --> method="POST">
             <input type="hidden" name="spot_id" value="<?= $spotId ?>">
             <div class="mb-3">
               <label class="form-label fw-semibold">Spot Title *</label>

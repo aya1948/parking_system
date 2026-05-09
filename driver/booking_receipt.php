@@ -5,7 +5,7 @@ requireRole('driver');
 require_once __DIR__ . '/../classes/Reservation.php';
 require_once __DIR__ . '/../config/db.php';
 
-$pageTitle     = 'Booking Receipt — CitySlot';
+$pageTitle     = 'Booking Receipt — Rakna';
 $user          = currentUser();
 $b             = BASE_URL;
 $reservationId = (int)($_GET['id'] ?? 0);
@@ -29,6 +29,33 @@ $receiptDate = date('Y-m-d H:i:s');
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
+<style>
+/* ألوان Rakna */
+.btn-primary {
+    background-color: #480959;
+    border-color: #480959;
+}
+.btn-primary:hover {
+    background-color: #8A2888;
+    border-color: #8A2888;
+}
+.btn-outline-primary {
+    color: #480959;
+    border-color: #480959;
+}
+.btn-outline-primary:hover {
+    background-color: #480959;
+    color: #fff;
+}
+.text-primary {
+    color: #480959 !important;
+}
+.receipt-header {
+    background: linear-gradient(135deg, #2d0a3d, #480959);
+    color: white;
+}
+</style>
+
 <div class="container-fluid px-0"><div class="row g-0">
 <?php require_once __DIR__ . '/../includes/sidebar.php'; ?>
 <div class="col-md-10 p-4">
@@ -38,10 +65,11 @@ require_once __DIR__ . '/../includes/header.php';
       <!-- RECEIPT CARD -->
       <div class="card shadow" id="receiptCard">
         <!-- HEADER -->
-        <div class="card-header text-center py-4"
-             style="background:linear-gradient(135deg,#0d1b2a,#1a73e8);color:white;">
-          <div style="font-size:2.5rem;">🅿️</div>
-          <h4 class="fw-bold mb-1 mt-2">CitySlot Parking</h4>
+        <div class="card-header text-center py-4 receipt-header">
+          <div style="font-size:2.5rem;">
+            <i class="bi bi-p-circle-fill"></i>
+          </div>
+          <h4 class="fw-bold mb-1 mt-2">Rakna Parking</h4>
           <p class="mb-0 opacity-75 small">Official Booking Receipt</p>
         </div>
 
@@ -69,7 +97,20 @@ require_once __DIR__ . '/../includes/header.php';
 
           <!-- SPOT INFO -->
           <h6 class="text-muted small fw-bold text-uppercase mb-2">Parking Spot</h6>
-          <p class="mb-1"><strong><?= htmlspecialchars($res['spot_title']) ?></strong></p>
+          <?php
+          $__stmtS = $db->prepare("SELECT s.spot_number, g.name AS garage_name FROM parking_spots s LEFT JOIN garages g ON s.garage_id = g.garage_id WHERE s.spot_id = (SELECT spot_id FROM reservations WHERE reservation_id = ?)");
+          $__stmtS->execute([$reservationId]);
+          $__spotExtra = $__stmtS->fetch();
+          ?>
+          <?php if (!empty($__spotExtra['garage_name'])): ?>
+          <p class="mb-1 small text-muted"><i class="bi bi-building me-1"></i><?= htmlspecialchars($__spotExtra['garage_name']) ?></p>
+          <?php endif; ?>
+          <p class="mb-1">
+            <?php if (!empty($__spotExtra['spot_number'])): ?>
+            <span class="badge bg-dark font-monospace me-1" style="background-color:#480959 !important;"><?= htmlspecialchars($__spotExtra['spot_number']) ?></span>
+            <?php endif; ?>
+            <strong><?= htmlspecialchars($res['spot_title']) ?></strong>
+          </p>
           <p class="mb-3 small text-muted"><i class="bi bi-geo-alt me-1"></i><?= htmlspecialchars($res['spot_address']) ?></p>
 
           <hr>
@@ -157,7 +198,7 @@ require_once __DIR__ . '/../includes/header.php';
           <div class="text-center py-3">
             <div class="bg-light rounded p-3 d-inline-block">
               <div class="font-monospace small text-muted mb-1">Booking QR Code</div>
-              <div style="font-size:3rem;">▦</div>
+              <div style="font-size:3rem;"><i class="bi bi-qr-code"></i></div>
               <div class="font-monospace small mt-1"><?= htmlspecialchars(substr($res['qr_code'],0,20)) ?>...</div>
             </div>
           </div>
@@ -179,29 +220,22 @@ require_once __DIR__ . '/../includes/header.php';
         <!-- FOOTER -->
         <div class="card-footer text-center text-muted small py-3"
              style="background:#f8f9fa;">
-          <p class="mb-1">Thank you for using CitySlot! 🅿️</p>
-          <p class="mb-0">Support: support@cityslot.com | This is an official receipt.</p>
+          <p class="mb-1"><i class="bi bi-p-circle me-1"></i> Thank you for using Rakna!</p>
+          <p class="mb-0">Support: support@rakna.com | This is an official receipt.</p>
         </div>
       </div>
 
       <!-- ACTIONS -->
       <div class="d-flex gap-3 mt-3 justify-content-center">
-        <button onclick="window.print()" class="btn btn-outline-secondary">
-          <i class="bi bi-printer me-1"></i>Print Receipt
-        </button>
         <a href="<?= $b ?>/index.php?action=my_reservations" class="btn btn-primary">
           <i class="bi bi-calendar-check me-1"></i>My Reservations
+        </a>
+        <a href="<?= $b ?>/index.php?action=search_spots" class="btn btn-outline-primary">
+          <i class="bi bi-search me-1"></i>Find More Parking
         </a>
       </div>
 
     </div>
   </div>
 </div></div></div>
-
-<style>
-@media print {
-  .sidebar, nav, .btn, .card-footer { display: none !important; }
-  #receiptCard { box-shadow: none !important; border: 1px solid #ddd !important; }
-}
-</style>
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

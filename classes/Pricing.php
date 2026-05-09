@@ -282,6 +282,18 @@ class Pricing {
         ];
     }
 
+    // ─── NEW: الحصول على العملة المفضلة للمستخدم ─────────────
+
+    /**
+     * Returns the preferred currency of a given user.
+     * Useful for displaying converted amounts in checkout or invoices.
+     */
+    public function getUserPreferredCurrency(int $userId): string {
+        $stmt = $this->db->prepare("SELECT preferred_currency FROM users WHERE user_id = ?");
+        $stmt->execute([$userId]);
+        return $stmt->fetchColumn() ?: 'EGP';
+    }
+
     // ─── NON-CRUD: Extension Cost ─────────────────────────────
 
     public function calculateExtensionCost(int $spotId, int $extraMinutes): float {

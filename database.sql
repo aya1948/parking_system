@@ -377,3 +377,28 @@ INSERT INTO peak_hour_rules (day_of_week, start_time, end_time, multiplier, even
 (NULL, '08:00:00', '10:00:00', 1.50, 'Morning Rush Hour'),
 (NULL, '17:00:00', '20:00:00', 1.75, 'Evening Rush Hour'),
 (6,   '10:00:00', '22:00:00', 1.30, 'Weekend Busy Hours');
+
+-- ============================================================
+-- GARAGES TABLE (new)
+-- ============================================================
+ALTER TABLE parking_spots 
+  ADD COLUMN garage_id INT NULL AFTER owner_id,
+  ADD COLUMN spot_number VARCHAR(10) NULL COMMENT 'e.g. A1, B3' AFTER garage_id;
+
+CREATE TABLE IF NOT EXISTS garages (
+    garage_id     INT AUTO_INCREMENT PRIMARY KEY,
+    owner_id      INT NOT NULL,
+    name          VARCHAR(150) NOT NULL,
+    address       VARCHAR(255) NOT NULL,
+    latitude      DECIMAL(10,8),
+    longitude     DECIMAL(11,8),
+    city_zone     VARCHAR(100),
+    total_floors  INT DEFAULT 1,
+    description   TEXT,
+    is_verified   TINYINT(1) DEFAULT 0,
+    created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (owner_id) REFERENCES users(user_id)
+);
+
+ALTER TABLE parking_spots
+  ADD FOREIGN KEY (garage_id) REFERENCES garages(garage_id) ON DELETE CASCADE;

@@ -5,7 +5,7 @@ requireRole('driver');
 require_once __DIR__ . '/../classes/Vehicle.php';
 
 // Vehicle.php includes the Review class too
-$pageTitle = 'Leave a Review — CitySlot';
+$pageTitle = 'Leave a Review — Rakna';
 $user      = currentUser();
 $resId     = (int)($_GET['reservation_id'] ?? 0);
 
@@ -25,13 +25,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
+<style>
+/* ألوان Rakna */
+.btn-warning {
+    background-color: #480959;
+    border-color: #480959;
+    color: #fff;
+}
+.btn-warning:hover {
+    background-color: #8A2888;
+    border-color: #8A2888;
+    color: #fff;
+}
+.card-header {
+    background-color: #480959;
+    color: #fff;
+    font-weight: bold;
+}
+</style>
+
 <div class="container-fluid px-0"><div class="row g-0">
 <?php require_once __DIR__ . '/../includes/sidebar.php'; ?>
 <div class="col-md-10 p-4">
   <div class="row justify-content-center">
     <div class="col-md-5">
       <div class="card">
-        <div class="card-header fw-bold">⭐ Leave a Review</div>
+        <div class="card-header"><i class="bi bi-star-fill me-1"></i> Leave a Review</div>
         <div class="card-body">
           <form method="POST">
             <input type="hidden" name="reservation_id" value="<?= $resId ?>">
@@ -61,7 +80,7 @@ require_once __DIR__ . '/../includes/header.php';
               <label class="form-label fw-semibold">Comment</label>
               <textarea name="comment" class="form-control" rows="4" placeholder="Share your experience..."></textarea>
             </div>
-            <button type="submit" class="btn btn-warning w-100 fw-bold">Submit Review</button>
+            <button type="submit" class="btn btn-warning w-100 fw-bold"><i class="bi bi-send-check me-1"></i>Submit Review</button>
           </form>
         </div>
       </div>

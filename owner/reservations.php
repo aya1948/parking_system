@@ -11,11 +11,13 @@ $status    = $_GET['status'] ?? '';
 
 $sql = "
     SELECT r.*, u.full_name AS driver_name, u.phone AS driver_phone,
-           s.title AS spot_title, v.license_plate, v.make, v.model
+           s.title AS spot_title, s.spot_number, g.name AS garage_name,
+           v.license_plate, v.make, v.model
     FROM reservations r
     JOIN users u ON r.driver_id = u.user_id
     JOIN parking_spots s ON r.spot_id = s.spot_id
     LEFT JOIN vehicles v ON r.vehicle_id = v.vehicle_id
+    LEFT JOIN garages g ON s.garage_id = g.garage_id
     WHERE s.owner_id = ?
 ";
 $params = [$user['user_id']];
@@ -56,7 +58,17 @@ require_once __DIR__ . '/../includes/header.php';
         <tbody>
           <?php foreach ($reservations as $r): ?>
           <tr>
-            <td><strong><?= htmlspecialchars($r['spot_title']) ?></strong></td>
+            <td>
+              <?php if (!empty($r['garage_name'])): ?>
+              <small class="text-muted d-block"><i class="bi bi-building me-1"></i><?= htmlspecialchars($r['garage_name']) ?></small>
+              <?php endif; ?>
+              <strong>
+                <?php if (!empty($r['spot_number'])): ?>
+                <span class="badge bg-dark font-monospace me-1"><?= htmlspecialchars($r['spot_number']) ?></span>
+                <?php endif; ?>
+                <?= htmlspecialchars($r['spot_title']) ?>
+              </strong>
+            </td>
             <td>
               <?= htmlspecialchars($r['driver_name']) ?>
               <br><small class="text-muted"><?= htmlspecialchars($r['driver_phone'] ?? '') ?></small>

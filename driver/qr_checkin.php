@@ -4,7 +4,7 @@ require_once __DIR__ . '/../config/session.php';
 requireRole('driver');
 require_once __DIR__ . '/../classes/Reservation.php';
 
-$pageTitle = 'QR Check-In — CitySlot';
+$pageTitle = 'QR Check-In — Rakna';
 $user      = currentUser();
 $resObj    = new Reservation();
 $resId     = (int)($_GET['id'] ?? 0);
@@ -23,6 +23,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
+<style>
+/* ألوان Rakna */
+.btn-success {
+    background-color: #480959;
+    border-color: #480959;
+}
+.btn-success:hover {
+    background-color: #8A2888;
+    border-color: #8A2888;
+}
+.badge.bg-primary {
+    background-color: #480959 !important;
+    color: #fff;
+}
+.text-primary {
+    color: #480959 !important;
+}
+</style>
+
 <div class="container-fluid px-0"><div class="row g-0">
 <?php require_once __DIR__ . '/../includes/sidebar.php'; ?>
 <div class="col-md-10 p-4">
@@ -30,7 +49,9 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="col-md-5 text-center">
       <div class="card">
         <div class="card-body py-5">
-          <div style="font-size:5rem;">🅿️</div>
+          <div style="font-size:5rem;">
+            <i class="bi bi-qr-code-scan"></i>
+          </div>
           <h4 class="fw-bold mt-3"><?= htmlspecialchars($res['spot_title']) ?></h4>
           <p class="text-muted"><?= htmlspecialchars($res['spot_address']) ?></p>
           <hr>
@@ -44,7 +65,7 @@ require_once __DIR__ . '/../includes/header.php';
               <i class="bi bi-check-circle me-2"></i>Confirm Check-In
             </button>
           </form>
-          <a href="/parking_system/index.php?action=my_reservations" class="btn btn-link mt-2">Back</a>
+          <a href="/parking_system/index.php?action=my_reservations" class="btn btn-link mt-2 text-primary">Back</a>
         </div>
       </div>
     </div>

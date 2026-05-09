@@ -1,6 +1,4 @@
 <?php
-date_default_timezone_set('Africa/Cairo');  // ضبط توقيت القاهرة
-
 // config/db.php - Database Connection
 define('DB_HOST', 'localhost');
 define('DB_USER', 'root');

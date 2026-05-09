@@ -6,7 +6,7 @@ require_once __DIR__ . '/../classes/Reservation.php';
 require_once __DIR__ . '/../classes/Fine.php';
 require_once __DIR__ . '/../classes/Notification.php';
 
-$pageTitle  = 'My Dashboard — CitySlot';
+$pageTitle  = 'My Dashboard — Rakna';
 $user       = currentUser();
 $resObj     = new Reservation();
 $fineObj    = new Fine();
@@ -19,12 +19,92 @@ $notifs     = $notifObj->getUserNotifications($user['user_id'], true);
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
+
+<style>
+/* ========== تنسيق ألوان الموف للوحة تحكم السائق ========== */
+/* أزرار أساسية */
+.btn-primary {
+    background-color: #480959;
+    border-color: #480959;
+    color: #fff;
+}
+.btn-primary:hover {
+    background-color: #8A2888;
+    border-color: #8A2888;
+    border-left: 3px solid #a1abb9;
+}
+
+/* أزرار الحدود */
+.btn-outline-secondary {
+    color: #480959;
+    border-color: #480959;
+}
+.btn-outline-secondary:hover {
+    background-color: #480959;
+    color: #fff;
+    border-left: 3px solid #a1abb9;
+}
+
+/* زر الخطر (Pay Fines) */
+.btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+.btn-danger:hover {
+    background-color: #c82333;
+}
+
+/* زر Check Out */
+.btn-sm.btn-danger {
+    background-color: #dc3545;
+    border-color: #dc3545;
+}
+
+/* تأثير hover على صفوف القوائم */
+.border-bottom:hover {
+    background-color: #f3e5f5;
+}
+
+/* لون النصوص الأساسية */
+.text-primary {
+    color: #480959 !important;
+}
+
+/* حدود يسارية للبطاقات الإحصائية */
+.stat-card {
+    border-left: 4px solid #480959;
+}
+.stat-card.border-danger {
+    border-left-color: #dc3545 !important;
+}
+.stat-card.border-warning {
+    border-left-color: #ffc107 !important;
+}
+
+/* رؤوس الكروت */
+.card-header {
+    background-color: #480959;
+    color: #fff;
+}
+.card-header a.small {
+    color: rgba(255,255,255,0.85);
+}
+.card-header a.small:hover {
+    color: #fff;
+}
+
+/* شارة Active */
+.badge.bg-success {
+    background-color: #480959 !important;
+}
+</style>
+
 <div class="container-fluid px-0">
 <div class="row g-0">
 <?php require_once __DIR__ . '/../includes/sidebar.php'; ?>
 
 <div class="col-md-10 p-4">
-  <h4 class="fw-bold mb-4">👋 Welcome back, <?= htmlspecialchars($user['full_name']) ?>!</h4>
+  <h4 class="fw-bold mb-4">Welcome back, <?= htmlspecialchars($user['full_name']) ?>!</h4>
 
   <!-- STAT CARDS -->
   <div class="row g-3 mb-4">
@@ -33,9 +113,9 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="d-flex justify-content-between align-items-center">
           <div>
             <p class="text-muted small mb-1">Active Parking</p>
-            <h3 class="fw-bold mb-0 text-success"><?= count($activeRes) ?></h3>
+            <h3 class="fw-bold mb-0" style="color: #480959;"><?= count($activeRes) ?></h3>
           </div>
-          <i class="bi bi-car-front fs-2 text-success opacity-50"></i>
+          <i class="bi bi-car-front fs-2 opacity-50" style="color: #480959;"></i>
         </div>
       </div>
     </div>
@@ -44,9 +124,9 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="d-flex justify-content-between align-items-center">
           <div>
             <p class="text-muted small mb-1">Upcoming</p>
-            <h3 class="fw-bold mb-0 text-primary"><?= count($upcomingRes) ?></h3>
+            <h3 class="fw-bold mb-0" style="color: #480959;"><?= count($upcomingRes) ?></h3>
           </div>
-          <i class="bi bi-calendar-check fs-2 text-primary opacity-50"></i>
+          <i class="bi bi-calendar-check fs-2 opacity-50" style="color: #480959;"></i>
         </div>
       </div>
     </div>
@@ -80,7 +160,7 @@ require_once __DIR__ . '/../includes/header.php';
       <div class="card p-3">
         <h6 class="fw-bold mb-3">Quick Actions</h6>
         <div class="d-flex flex-wrap gap-2">
-          <a href="/parking_system/index.php?action=search_spots" class="btn btn-primary"><i class="bi bi-search me-1"></i> Find Parking</a>
+          <a href="/parking_system/index.php?action=search_spots" class="btn btn-primary"><i class="bi bi-building me-1"></i> Find Garage</a>
           <a href="/parking_system/index.php?action=my_reservations" class="btn btn-outline-secondary"><i class="bi bi-calendar3 me-1"></i> All Reservations</a>
           <a href="/parking_system/index.php?action=my_vehicles" class="btn btn-outline-secondary"><i class="bi bi-car-front me-1"></i> Manage Vehicles</a>
           <?php if (count($unpaidFines) > 0): ?>
@@ -96,7 +176,7 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="col-md-6">
       <div class="card">
         <div class="card-header d-flex justify-content-between">
-          <span>🚗 Active Parking</span>
+          <span><i class="bi bi-car-front me-1"></i> Active Parking</span>
           <a href="/parking_system/index.php?action=my_reservations" class="small">View All</a>
         </div>
         <div class="card-body p-0">
@@ -127,7 +207,7 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="col-md-6">
       <div class="card">
         <div class="card-header d-flex justify-content-between">
-          <span>🔔 Notifications</span>
+          <span><i class="bi bi-bell me-1"></i> Notifications</span>
           <a href="/parking_system/index.php?action=notifications" class="small">View All</a>
         </div>
         <div class="card-body p-0">
@@ -137,7 +217,7 @@ require_once __DIR__ . '/../includes/header.php';
             <?php foreach (array_slice($notifs, 0, 5) as $n): ?>
             <div class="p-3 border-bottom">
               <div class="d-flex gap-2">
-                <span><?= $n['type'] === 'penalty_alert' ? '⚠️' : '📢' ?></span>
+                <span><?= $n['type'] === 'penalty_alert' ? '<i class="bi bi-exclamation-triangle text-danger"></i>' : '<i class="bi bi-info-circle" style="color: #480959;"></i>' ?></span>
                 <div>
                   <strong class="small"><?= htmlspecialchars($n['title']) ?></strong>
                   <p class="small text-muted mb-0"><?= htmlspecialchars($n['message']) ?></p>

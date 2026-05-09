@@ -23,9 +23,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     } elseif ($action === 'set_status') {
         $status = $_POST['status'] ?? 'unavailable';
-        $stmt   = $db->prepare("UPDATE parking_spots SET status = ? WHERE spot_id = ?");
-        $stmt->execute([$status, $spotId]);
-        setFlash('success', 'Spot status updated.');
+        // Check: cannot change status if spot has active/confirmed reservations
+        $checkStmt = $db->prepare("
+            SELECT COUNT(*) FROM reservations
+            WHERE spot_id = ? AND status IN ('confirmed','active','extended','pending')
+        ");
+        $checkStmt->execute([$spotId]);
+        $activeCount = (int)$checkStmt->fetchColumn();
+
+        if ($activeCount > 0 && in_array($status, ['unavailable','maintenance','owner_use'])) {
+            setFlash('error', "Cannot change status: this spot has {$activeCount} active/upcoming reservation(s). Use Emergency Override to force cancel.");
+        } else {
+            $stmt = $db->prepare("UPDATE parking_spots SET status = ? WHERE spot_id = ?");
+            $stmt->execute([$status, $spotId]);
+            setFlash('success', 'Spot status updated.');
+        }
 
     } elseif ($action === 'emergency') {
         $fineObj = new Fine();
