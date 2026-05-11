@@ -28,10 +28,13 @@ require_once __DIR__ . '/../includes/header.php';
   <!-- HEADER -->
   <div class="d-flex justify-content-between align-items-start mb-4">
     <div>
-      <h4 class="fw-bold mb-1">🏢 <?= htmlspecialchars($garage['name']) ?></h4>
+      <h4 class="fw-bold mb-1"><i class="bi bi-building me-2"></i><?= htmlspecialchars($garage['name']) ?></h4>
       <p class="text-muted mb-0"><i class="bi bi-geo-alt me-1"></i><?= htmlspecialchars($garage['address']) ?></p>
     </div>
-    <a href="<?= $b ?>/index.php?action=my_spots" class="btn btn-outline-secondary btn-sm">← Back</a>
+    <div>
+      <a href="<?= $b ?>/index.php?action=manage_spots&garage_id=<?= $garageId ?>" class="btn btn-outline-primary btn-sm me-2"><i class="bi bi-sliders me-1"></i> Manage Spots</a>
+      <a href="<?= $b ?>/index.php?action=my_spots" class="btn btn-outline-secondary btn-sm">← Back</a>
+    </div>
   </div>
 
   <!-- OCCUPANCY STATS -->
@@ -72,7 +75,7 @@ require_once __DIR__ . '/../includes/header.php';
 
   <!-- SPOT GRID -->
   <div class="card">
-    <div class="card-header fw-bold">🅿️ Parking Map</div>
+    <div class="card-header fw-bold"><i class="bi bi-p-circle-fill me-1"></i> Parking Map</div>
     <div class="card-body">
       <?php if (empty($grid)): ?>
         <p class="text-muted">No spots generated yet.</p>
@@ -90,9 +93,9 @@ require_once __DIR__ . '/../includes/header.php';
               default        => 'success',
             };
             $icon = match($spot['real_status']) {
-              'occupied'    => '🚗',
-              'maintenance' => '🔧',
-              default       => '🅿️',
+              'occupied'    => '<i class="bi bi-car-front-fill"></i>',
+              'maintenance' => '<i class="bi bi-tools"></i>',
+              default       => '<i class="bi bi-p-circle"></i>',
             };
           ?>
           <div class="text-center" style="min-width:70px;">

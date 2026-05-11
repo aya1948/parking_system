@@ -30,10 +30,27 @@ $reservations = $stmt->fetchAll();
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
+<style>
+.nav-tabs .nav-link {
+    color: #480959;
+    border: none;
+    border-radius: 0.4rem;
+    padding: 0.5rem 1rem;
+}
+.nav-tabs .nav-link.active {
+    background-color: #480959;
+    color: #ffffff;
+    font-weight: bold;
+}
+.nav-tabs .nav-link:hover {
+    background-color: transparent;
+    color: #480959;
+}
+</style>
 <div class="container-fluid px-0"><div class="row g-0">
 <?php require_once __DIR__ . '/../includes/sidebar.php'; ?>
 <div class="col-md-10 p-4">
-  <h4 class="fw-bold mb-4">📅 Reservations on My Spots</h4>
+  <h4 class="fw-bold mb-4"><i class="bi bi-calendar-check me-2"></i>Reservations on My Spots</h4>
 
   <!-- STATUS TABS -->
   <ul class="nav nav-tabs mb-3">

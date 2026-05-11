@@ -28,15 +28,20 @@ $stmt = $db->query("SELECT ez.*, u.full_name AS admin_name FROM event_zones ez J
 $zones = $stmt->fetchAll();
 require_once __DIR__ . '/../includes/header.php';
 ?>
+<style>
+.btn-danger { background-color:#dc3545; border-color:#dc3545; }
+.btn-danger:hover { background-color:#c82333; border-color:#c82333; }
+.card-header { background-color:#480959; color:#fff; font-weight:bold; }
+</style>
 <div class="container-fluid px-0"><div class="row g-0">
 <?php require_once __DIR__ . '/../includes/sidebar.php'; ?>
 <div class="col-md-10 p-4">
-  <h4 class="fw-bold mb-4">🚧 Municipal Event Zones</h4>
+  <h4 class="fw-bold mb-4"><i class="bi bi-cone-striped me-2"></i>Municipal Event Zones</h4>
   <div class="row g-4">
     <!-- CREATE FORM -->
     <div class="col-md-4">
       <div class="card">
-        <div class="card-header fw-bold">+ Create Event Zone</div>
+        <div class="card-header"><i class="bi bi-plus-circle me-1"></i> Create Event Zone</div>
         <div class="card-body">
           <form method="POST">
             <div class="mb-3">
@@ -71,7 +76,7 @@ require_once __DIR__ . '/../includes/header.php';
                 <input type="datetime-local" name="active_until" class="form-control" required>
               </div>
             </div>
-            <button type="submit" class="btn btn-danger w-100">🔒 Create & Lock Zone</button>
+            <button type="submit" class="btn btn-danger w-100"><i class="bi bi-lock-fill me-1"></i> Create & Lock Zone</button>
           </form>
         </div>
       </div>

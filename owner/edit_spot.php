@@ -17,15 +17,23 @@ if (!$spot || $spot['owner_id'] != $user['user_id']) {
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
+<style>
+.btn-primary { background-color:#480959; border-color:#480959; }
+.btn-primary:hover { background-color:#8A2888; border-color:#8A2888; }
+.btn-outline-secondary { color:#480959; border-color:#480959; }
+.btn-outline-secondary:hover { background-color:#480959; color:#fff; }
+.card-header { background-color:#480959; color:#fff; font-weight:bold; }
+</style>
+
 <div class="container-fluid px-0"><div class="row g-0">
 <?php require_once __DIR__ . '/../includes/sidebar.php'; ?>
 <div class="col-md-10 p-4">
   <div class="row justify-content-center">
     <div class="col-md-7">
       <div class="card">
-        <div class="card-header fw-bold">✏️ Edit: <?= htmlspecialchars($spot['title']) ?></div>
+        <div class="card-header"><i class="bi bi-pencil-square me-1"></i> Edit: <?= htmlspecialchars($spot['title']) ?></div>
         <div class="card-body">
-          <form action="/parking_system/index.php?action=do_edit_spot"<!-- calls updateSpot() --> method="POST">
+          <form action="/parking_system/index.php?action=do_edit_spot" method="POST">
             <input type="hidden" name="spot_id" value="<?= $spotId ?>">
             <div class="mb-3">
               <label class="form-label fw-semibold">Spot Title *</label>
@@ -63,7 +71,7 @@ require_once __DIR__ . '/../includes/header.php';
             <div class="form-check mb-4">
               <input class="form-check-input" type="checkbox" name="has_ev_charger" id="hasEv"
                      <?= $spot['has_ev_charger'] ? 'checked' : '' ?>>
-              <label class="form-check-label" for="hasEv">⚡ This spot has an EV charging station</label>
+              <label class="form-check-label" for="hasEv"><i class="bi bi-lightning-charge me-1"></i> This spot has an EV charging station</label>
             </div>
             <div class="d-flex gap-2">
               <button type="submit" class="btn btn-primary flex-fill">Save Changes</button>

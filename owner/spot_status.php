@@ -22,13 +22,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
+<style>
+.btn-primary { background-color:#480959; border-color:#480959; }
+.btn-primary:hover { background-color:#8A2888; }
+</style>
 <div class="container-fluid px-0"><div class="row g-0">
 <?php require_once __DIR__ . '/../includes/sidebar.php'; ?>
 <div class="col-md-10 p-4">
   <div class="row justify-content-center">
     <div class="col-md-5">
       <div class="card">
-        <div class="card-header fw-bold">🔄 Change Spot Status</div>
+        <div class="card-header fw-bold"><i class="bi bi-arrow-repeat me-1"></i> Change Spot Status</div>
         <div class="card-body">
           <h6><?= htmlspecialchars($spot['title']) ?></h6>
           <p class="text-muted small"><?= htmlspecialchars($spot['address']) ?></p>
@@ -36,7 +40,14 @@ require_once __DIR__ . '/../includes/header.php';
           <form method="POST">
             <div class="mb-4">
               <label class="form-label fw-semibold">New Status</label>
-              <?php foreach (['available'=>['success','✅ Available'],'unavailable'=>['secondary','🔒 Unavailable'],'maintenance'=>['warning','🔧 Maintenance'],'owner_use'=>['info','🏠 Owner Use']] as $s => [$c, $label]): ?>
+              <?php
+              $statuses = [
+                'available'   => ['success',   '<i class="bi bi-check-circle me-1"></i> Available'],
+                'unavailable' => ['secondary', '<i class="bi bi-lock me-1"></i> Unavailable'],
+                'maintenance' => ['warning',   '<i class="bi bi-tools me-1"></i> Maintenance'],
+                'owner_use'   => ['info',      '<i class="bi bi-house-door me-1"></i> Owner Use'],
+              ];
+              foreach ($statuses as $s => [$c, $label]): ?>
               <div class="form-check mb-2">
                 <input class="form-check-input" type="radio" name="status" value="<?= $s ?>" id="s_<?= $s ?>"
                   <?= $spot['status'] === $s ? 'checked' : '' ?>>

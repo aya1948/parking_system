@@ -22,12 +22,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'delet
 $garages = $garageObj->listOwnerGarages($user['user_id']);
 require_once __DIR__ . '/../includes/header.php';
 ?>
+<style>
+.btn-primary { background-color:#480959; border-color:#480959; }
+.btn-primary:hover { background-color:#8A2888; border-color:#8A2888; }
+.btn-outline-primary { color:#480959; border-color:#480959; }
+.btn-outline-primary:hover { background-color:#480959; color:#fff; }
+</style>
+
 <div class="container-fluid px-0"><div class="row g-0">
 <?php require_once __DIR__ . '/../includes/sidebar.php'; ?>
 <div class="col-md-10 p-4">
 
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="fw-bold mb-0">🏢 My Garages & Spots</h4>
+    <h4 class="fw-bold mb-0"><i class="bi bi-building me-2"></i>My Garages & Spots</h4>
     <a href="<?= $b ?>/index.php?action=add_garage" class="btn btn-primary">
       <i class="bi bi-plus-circle me-1"></i>Add New Garage
     </a>
@@ -35,7 +42,7 @@ require_once __DIR__ . '/../includes/header.php';
 
   <?php if (empty($garages)): ?>
   <div class="text-center py-5">
-    <div style="font-size:5rem;">🏢</div>
+    <div style="font-size:5rem;"><i class="bi bi-building"></i></div>
     <h5 class="mt-3 fw-bold">No Garages Yet</h5>
     <p class="text-muted">Add your first garage and generate numbered spots.</p>
     <a href="<?= $b ?>/index.php?action=add_garage" class="btn btn-primary btn-lg mt-2">
@@ -61,7 +68,7 @@ require_once __DIR__ . '/../includes/header.php';
   <div class="card mb-4 shadow-sm">
     <div class="card-header d-flex justify-content-between align-items-center py-3" style="background:#f8f9fa;">
       <div class="d-flex align-items-center gap-3">
-        <div style="font-size:2rem;">🏢</div>
+        <div style="font-size:2rem;"><i class="bi bi-building"></i></div>
         <div>
           <h5 class="fw-bold mb-0"><?= htmlspecialchars($g['name']) ?></h5>
           <small class="text-muted"><i class="bi bi-geo-alt me-1"></i><?= htmlspecialchars($g['address']) ?>
@@ -72,6 +79,9 @@ require_once __DIR__ . '/../includes/header.php';
       <div class="d-flex gap-2">
         <a href="<?= $b ?>/index.php?action=garage_map&id=<?= $g['garage_id'] ?>" class="btn btn-primary btn-sm">
           <i class="bi bi-map me-1"></i>View Map
+        </a>
+        <a href="<?= $b ?>/index.php?action=manage_spots&garage_id=<?= $g['garage_id'] ?>" class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-sliders me-1"></i>Manage Spots
         </a>
         <a href="<?= $b ?>/index.php?action=owner_reservations" class="btn btn-outline-secondary btn-sm">
           <i class="bi bi-calendar3 me-1"></i>Reservations
@@ -101,7 +111,7 @@ require_once __DIR__ . '/../includes/header.php';
       </div>
       <?php if ($g['total_spots'] === 0): ?>
       <div class="alert alert-warning d-flex justify-content-between align-items-center mb-0">
-        <span>⚠️ No spots yet.</span>
+        <span><i class="bi bi-exclamation-triangle me-1"></i> No spots yet.</span>
         <a href="<?= $b ?>/index.php?action=add_garage&step=2&garage_id=<?= $g['garage_id'] ?>" class="btn btn-warning btn-sm">Generate Spots</a>
       </div>
       <?php else: ?>

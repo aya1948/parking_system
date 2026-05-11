@@ -56,8 +56,8 @@ $routeFiles = [
     // Owner
     'owner_dashboard'    => 'owner/dashboard.php',
     'my_spots'           => 'owner/my_spots.php',
-    'add_spot'           => 'owner/add_spot.php',
-    'do_add_spot'        => 'owner/do_add_spot.php',
+    'manage_spots'       => 'owner/manage_spots.php',   // ← مسار المالك (كما هو)
+    // تم حذف add_spot و do_add_spot لأن الإدارة أصبحت عبر الجراجات فقط
     'edit_spot'          => 'owner/edit_spot.php',
     'do_edit_spot'       => 'owner/do_edit_spot.php',
     'delete_spot'        => 'owner/delete_spot.php',
@@ -75,7 +75,7 @@ $routeFiles = [
     // Admin
     'admin_dashboard'    => 'admin/dashboard.php',
     'manage_users'       => 'admin/manage_users.php',
-    'manage_spots'       => 'admin/manage_spots.php',
+    'admin_manage_spots' => 'admin/manage_spots.php',   // ← مسار المدير الجديد
     'verifications'      => 'admin/verifications.php',
     'manage_fines'       => 'admin/manage_fines.php',
     'appeals'            => 'admin/appeals.php',

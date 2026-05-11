@@ -63,6 +63,7 @@ $role = $user['role'];
     <li><a class="nav-link" href="/parking_system/index.php?action=owner_dashboard"><i class="bi bi-house-door"></i> Dashboard</a></li>
     <li><a class="nav-link" href="/parking_system/index.php?action=my_spots"><i class="bi bi-geo-alt"></i> My Spots</a></li>
     <li><a class="nav-link" href="/parking_system/index.php?action=add_garage"><i class="bi bi-building"></i> Add Garage</a></li>
+    <li><a class="nav-link" href="/parking_system/index.php?action=manage_spots"><i class="bi bi-sliders"></i> Manage Spots</a></li>
     <li><a class="nav-link" href="/parking_system/index.php?action=owner_reservations"><i class="bi bi-calendar3"></i> Reservations</a></li>
     <li><a class="nav-link" href="/parking_system/index.php?action=earnings"><i class="bi bi-wallet2"></i> Earnings</a></li>
     <li><a class="nav-link" href="/parking_system/index.php?action=owner_report"><i class="bi bi-file-earmark-bar-graph"></i> Reports</a></li>
@@ -73,7 +74,8 @@ $role = $user['role'];
   <ul class="nav flex-column">
     <li><a class="nav-link" href="/parking_system/index.php?action=admin_dashboard"><i class="bi bi-speedometer2"></i> Dashboard</a></li>
     <li><a class="nav-link" href="/parking_system/index.php?action=manage_users"><i class="bi bi-people"></i> Users</a></li>
-    <li><a class="nav-link" href="/parking_system/index.php?action=manage_spots"><i class="bi bi-geo"></i> All Spots</a></li>
+    <!-- تم تعديل المسار هنا إلى admin_manage_spots ليتوافق مع ملف index.php -->
+    <li><a class="nav-link" href="/parking_system/index.php?action=admin_manage_spots"><i class="bi bi-geo"></i> All Spots</a></li>
     <li><a class="nav-link" href="/parking_system/index.php?action=verifications"><i class="bi bi-patch-check"></i> Verifications</a></li>
     <li><a class="nav-link" href="/parking_system/index.php?action=manage_fines"><i class="bi bi-file-earmark-x"></i> Fines</a></li>
     <li><a class="nav-link" href="/parking_system/index.php?action=appeals"><i class="bi bi-shield-check"></i> Appeals</a></li>

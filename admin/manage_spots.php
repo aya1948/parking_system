@@ -23,7 +23,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     } elseif ($action === 'set_status') {
         $status = $_POST['status'] ?? 'unavailable';
-        // Check: cannot change status if spot has active/confirmed reservations
         $checkStmt = $db->prepare("
             SELECT COUNT(*) FROM reservations
             WHERE spot_id = ? AND status IN ('confirmed','active','extended','pending')
@@ -97,11 +96,25 @@ $statsRow = $db->query("
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
+<style>
+.btn-primary { background-color:#480959; border-color:#480959; }
+.btn-primary:hover { background-color:#8A2888; border-color:#8A2888; }
+.btn-outline-success { color:#198754; border-color:#198754; }
+.btn-outline-success:hover { background-color:#198754; color:#fff; }
+.btn-outline-danger { color:#dc3545; border-color:#dc3545; }
+.btn-outline-danger:hover { background-color:#dc3545; color:#fff; }
+.btn-danger { background-color:#dc3545; border-color:#dc3545; }
+.card-header { background-color:#480959; color:#fff; font-weight:bold; }
+.table-hover tbody tr:hover { background-color:#f3e5f5; }
+.stat-card { border-left: 4px solid #480959; }
+.badge.bg-success { background-color:#198754 !important; }
+</style>
+
 <div class="container-fluid px-0"><div class="row g-0">
 <?php require_once __DIR__ . '/../includes/sidebar.php'; ?>
 <div class="col-md-10 p-4">
 
-  <h4 class="fw-bold mb-4">🅿️ Spot Management</h4>
+  <h4 class="fw-bold mb-4"><i class="bi bi-p-circle-fill me-2"></i>Spot Management</h4>
 
   <!-- STATS -->
   <div class="row g-3 mb-4">
@@ -207,7 +220,7 @@ require_once __DIR__ . '/../includes/header.php';
             <td class="text-primary fw-bold"><?= number_format($s['price_per_hour'],2) ?> EGP</td>
             <td class="text-center"><?= $s['total_bookings'] ?></td>
             <td>
-              <span class="text-warning"><?= number_format($s['trust_score'],1) ?>★</span>
+              <span class="text-warning"><?= number_format($s['trust_score'],1) ?><i class="bi bi-star-fill ms-1"></i></span>
               <br><small class="text-muted"><?= $s['total_reviews'] ?> reviews</small>
             </td>
             <td>
@@ -224,9 +237,9 @@ require_once __DIR__ . '/../includes/header.php';
             </td>
             <td class="text-center">
               <?php if ($s['is_verified']): ?>
-                <span class="badge bg-success">✅ Verified</span>
+                <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i> Verified</span>
               <?php else: ?>
-                <span class="badge bg-danger">❌ No</span>
+                <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i> No</span>
               <?php endif; ?>
             </td>
             <td>
@@ -237,7 +250,7 @@ require_once __DIR__ . '/../includes/header.php';
                   <input type="hidden" name="spot_id" value="<?= $s['spot_id'] ?>">
                   <button class="btn btn-sm btn-<?= $s['is_verified'] ? 'outline-danger' : 'outline-success' ?>"
                           title="<?= $s['is_verified'] ? 'Revoke Verification' : 'Approve Spot' ?>">
-                    <?= $s['is_verified'] ? '🔒' : '✅' ?>
+                    <i class="bi bi-<?= $s['is_verified'] ? 'shield-lock' : 'shield-check' ?>"></i>
                   </button>
                 </form>
 
@@ -245,14 +258,14 @@ require_once __DIR__ . '/../includes/header.php';
                 <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal"
                         data-bs-target="#statusModal"
                         onclick="document.getElementById('statusSpotId').value='<?= $s['spot_id'] ?>'">
-                  🔄
+                  <i class="bi bi-arrow-repeat"></i>
                 </button>
 
                 <!-- Emergency Override -->
                 <button class="btn btn-sm btn-outline-danger" data-bs-toggle="modal"
                         data-bs-target="#emergencyModal"
                         onclick="document.getElementById('emergSpotId').value='<?= $s['spot_id'] ?>'">
-                  🚨
+                  <i class="bi bi-exclamation-triangle"></i>
                 </button>
 
                 <!-- Delete -->
@@ -260,7 +273,7 @@ require_once __DIR__ . '/../includes/header.php';
                       onsubmit="return confirm('Delete spot: <?= addslashes($s['title']) ?>? This cannot be undone.')">
                   <input type="hidden" name="action"  value="delete">
                   <input type="hidden" name="spot_id" value="<?= $s['spot_id'] ?>">
-                  <button class="btn btn-sm btn-danger" title="Delete">🗑️</button>
+                  <button class="btn btn-sm btn-danger" title="Delete"><i class="bi bi-trash3"></i></button>
                 </form>
               </div>
             </td>
@@ -287,10 +300,10 @@ require_once __DIR__ . '/../includes/header.php';
         <input type="hidden" name="spot_id"  id="statusSpotId">
         <label class="form-label">New Status</label>
         <select name="status" class="form-select">
-          <option value="available">✅ Available</option>
-          <option value="unavailable">🔒 Unavailable</option>
-          <option value="maintenance">🔧 Maintenance</option>
-          <option value="owner_use">🏠 Owner Use</option>
+          <option value="available"><i class="bi bi-check-circle me-1"></i> Available</option>
+          <option value="unavailable"><i class="bi bi-lock me-1"></i> Unavailable</option>
+          <option value="maintenance"><i class="bi bi-tools me-1"></i> Maintenance</option>
+          <option value="owner_use"><i class="bi bi-house-door me-1"></i> Owner Use</option>
         </select>
       </div>
       <div class="modal-footer">
@@ -305,14 +318,14 @@ require_once __DIR__ . '/../includes/header.php';
 <div class="modal fade" id="emergencyModal" tabindex="-1">
   <div class="modal-dialog">
     <form method="POST" class="modal-content">
-      <div class="modal-header bg-danger text-white">
-        <h5 class="modal-title">🚨 Emergency Override</h5>
+      <div class="modal-header" style="background:#480959; color:#fff;">
+        <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-1"></i> Emergency Override</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
       </div>
       <div class="modal-body">
         <input type="hidden" name="action"   value="emergency">
         <input type="hidden" name="spot_id"  id="emergSpotId">
-        <div class="alert alert-danger small">This will cancel ALL active reservations and issue full refunds.</div>
+        <div class="alert alert-danger small"><i class="bi bi-info-circle me-1"></i> This will cancel ALL active reservations and issue full refunds.</div>
         <label class="form-label fw-semibold">Reason *</label>
         <textarea name="reason" class="form-control" rows="3" required
                   placeholder="Emergency vehicle access, fire evacuation..."></textarea>

@@ -14,13 +14,16 @@ $monthName  = date('F', mktime(0,0,0,$month,1,$year));
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
+<style>
+.btn-success { background-color:#480959; border-color:#480959; }
+.btn-success:hover { background-color:#8A2888; }
+</style>
 <div class="container-fluid px-0"><div class="row g-0">
 <?php require_once __DIR__ . '/../includes/sidebar.php'; ?>
 <div class="col-md-10 p-4">
   <div class="d-flex justify-content-between align-items-center mb-4">
-    <h4 class="fw-bold mb-0">📊 Monthly Report — <?= $monthName ?> <?= $year ?></h4>
+    <h4 class="fw-bold mb-0"><i class="bi bi-bar-chart-fill me-2"></i>Monthly Report — <?= $monthName ?> <?= $year ?></h4>
     <div class="d-flex gap-2">
-      <!-- Month/Year picker -->
       <form method="GET" class="d-flex gap-2">
         <input type="hidden" name="action" value="owner_report">
         <select name="month" class="form-select form-select-sm">
@@ -72,7 +75,7 @@ require_once __DIR__ . '/../includes/header.php';
     <!-- SPOT PERFORMANCE -->
     <div class="col-md-6">
       <div class="card">
-        <div class="card-header">🅿️ Spot Performance</div>
+        <div class="card-header"><i class="bi bi-p-circle me-1"></i> Spot Performance</div>
         <div class="table-responsive">
           <table class="table table-sm mb-0">
             <thead class="table-light"><tr><th>Spot</th><th>Bookings</th><th>Trust</th></tr></thead>
@@ -94,7 +97,7 @@ require_once __DIR__ . '/../includes/header.php';
     <!-- TOP HOURS -->
     <div class="col-md-6">
       <div class="card">
-        <div class="card-header">⏰ Busiest Booking Hours</div>
+        <div class="card-header"><i class="bi bi-clock-fill me-1"></i> Busiest Booking Hours</div>
         <div class="card-body">
           <?php if (empty($data['top_hours'])): ?>
             <p class="text-muted small">No data for this period.</p>

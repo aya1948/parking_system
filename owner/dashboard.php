@@ -114,16 +114,16 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
   </div>
 
-  <!-- MY SPOTS TABLE -->
+  <!-- MY GARAGES TABLE -->
   <div class="card">
     <div class="card-header d-flex justify-content-between" style="background-color: #480959; color: #fff;">
       <span><i class="bi bi-building me-1"></i> My Garages</span>
       <a href="/parking_system/index.php?action=my_spots" class="small text-white">View All Garages</a>
     </div>
     <div class="card-body p-0">
-      <?php if (empty($spots)): ?>
+      <?php if (empty($garages)): // تم التصحيح هنا — استخدمنا $garages بدلاً من $spots ?>
         <div class="p-4 text-center text-muted">
-          No spots yet. <a href="/parking_system/index.php?action=add_garage">List your first spot!</a>
+          No garages yet. <a href="/parking_system/index.php?action=add_garage">Add your first garage!</a>
         </div>
       <?php else: ?>
       <div class="table-responsive">
@@ -151,7 +151,8 @@ require_once __DIR__ . '/../includes/header.php';
               </td>
               <td><span class="badge" style="background-color: #480959;">Active</span></td>
               <td>
-                <a href="/parking_system/index.php?action=garage_map&id=<?= $s['garage_id'] ?>" class="btn btn-sm btn-primary">View Map</a>
+                <a href="/parking_system/index.php?action=garage_map&id=<?= $s['garage_id'] ?>" class="btn btn-sm btn-primary me-1"><i class="bi bi-map"></i> Map</a>
+                <a href="/parking_system/index.php?action=manage_spots&garage_id=<?= $s['garage_id'] ?>" class="btn btn-sm btn-outline-primary"><i class="bi bi-sliders"></i> Manage</a>
               </td>
             </tr>
             <?php endforeach; ?>

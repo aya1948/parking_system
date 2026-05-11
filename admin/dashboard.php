@@ -12,7 +12,6 @@ $stats     = $reportObj->getSystemStats();
 require_once __DIR__ . '/../includes/header.php';
 ?>
 
-<!-- تنسيق مخصص لأزرار Quick Actions (يطابق hover السايد بار) -->
 <style>
 .quick-action-btn {
     background-color: #480959;
@@ -27,14 +26,12 @@ require_once __DIR__ . '/../includes/header.php';
     color: #ffffff;
     border-left: 3px solid #a1abb9;
 }
-/* توحيد ألوان أيقونات بطاقات الوحدات مع الموف */
 .spot-card i {
     color: #480959 !important;
 }
 .spot-card h6 {
     color: #2c3e50;
 }
-/* حواف يسارية للبطاقات الإحصائية */
 .stat-card {
     border-left: 4px solid #480959;
 }
@@ -97,13 +94,13 @@ require_once __DIR__ . '/../includes/header.php';
   <div class="row g-3">
     <?php
     $modules = [
-      ['manage_users',    'people',          'primary',   'User Management',       'Register, search, blacklist, deactivate users'],
-      ['manage_spots',    'geo-alt',         'success',   'Spot Management',       'View & manage all parking spots'],
-      ['manage_fines',    'file-earmark-x',  'danger',    'Fine Management',       'Issue and track digital fines'],
-      ['event_zones',     'bounding-box',    'warning',   'Event Zones',           'Lock city zones for events'],
-      ['peak_rules',      'clock-history',   'info',      'Peak Hour Rules',       'Configure pricing multipliers'],
-      ['promo_codes',     'tag',             'secondary', 'Promo Codes',           'Manage discount codes'],
-      ['heatmap',         'map',             'primary',   'Revenue Heatmap',       'Zone-level revenue analytics'],
+      ['manage_users',      'people',          'primary',   'User Management',       'Register, search, blacklist, deactivate users'],
+      ['admin_manage_spots','geo-alt',         'success',   'Spot Management',       'View & manage all parking spots'],
+      ['manage_fines',      'file-earmark-x',  'danger',    'Fine Management',       'Issue and track digital fines'],
+      ['event_zones',       'bounding-box',    'warning',   'Event Zones',           'Lock city zones for events'],
+      ['peak_rules',        'clock-history',   'info',      'Peak Hour Rules',       'Configure pricing multipliers'],
+      ['promo_codes',       'tag',             'secondary', 'Promo Codes',           'Manage discount codes'],
+      ['heatmap',           'map',             'primary',   'Revenue Heatmap',       'Zone-level revenue analytics'],
     ];
     foreach ($modules as [$action, $icon, $color, $title, $desc]):
     ?>

@@ -36,16 +36,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
+<style>
+.btn-success { background-color:#480959; border-color:#480959; }
+.btn-success:hover { background-color:#8A2888; }
+</style>
 <div class="container-fluid px-0"><div class="row g-0">
 <?php require_once __DIR__ . '/../includes/sidebar.php'; ?>
 <div class="col-md-10 p-4">
   <div class="row justify-content-center">
     <div class="col-md-6">
       <div class="card">
-        <div class="card-header fw-bold">📋 Verify: <?= htmlspecialchars($spot['title']) ?></div>
+        <div class="card-header fw-bold"><i class="bi bi-check2-square me-1"></i> Verify: <?= htmlspecialchars($spot['title']) ?></div>
         <div class="card-body">
           <div class="alert alert-info">
-            To activate your spot, please upload a valid government ID and a utility bill proving ownership/access to this address.
+            <i class="bi bi-info-circle me-1"></i> To activate your spot, please upload a valid government ID and a utility bill proving ownership/access to this address.
           </div>
           <form method="POST" enctype="multipart/form-data">
             <div class="mb-3">

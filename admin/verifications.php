@@ -37,13 +37,21 @@ $verifications = $stmt->fetchAll();
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
+<style>
+.btn-success { background-color:#198754; border-color:#198754; }
+.btn-success:hover { background-color:#157347; border-color:#157347; }
+.btn-outline-primary { color:#480959; border-color:#480959; }
+.btn-outline-primary:hover { background-color:#480959; color:#fff; }
+.btn-outline-secondary { color:#6c757d; border-color:#6c757d; }
+.btn-outline-secondary:hover { background-color:#6c757d; color:#fff; }
+</style>
 <div class="container-fluid px-0"><div class="row g-0">
 <?php require_once __DIR__ . '/../includes/sidebar.php'; ?>
 <div class="col-md-10 p-4">
-  <h4 class="fw-bold mb-4">✅ Owner Verification Requests</h4>
+  <h4 class="fw-bold mb-4"><i class="bi bi-patch-check me-2"></i>Owner Verification Requests</h4>
 
   <?php if (empty($verifications)): ?>
-    <div class="alert alert-success">No pending verification requests.</div>
+    <div class="alert alert-success"><i class="bi bi-check-circle me-1"></i> No pending verification requests.</div>
   <?php else: ?>
   <?php foreach ($verifications as $v): ?>
   <div class="card mb-3">
@@ -76,8 +84,8 @@ require_once __DIR__ . '/../includes/header.php';
           <form method="POST">
             <input type="hidden" name="verification_id" value="<?= $v['verification_id'] ?>">
             <div class="d-flex gap-2 mb-2">
-              <button type="submit" name="action" value="approve" class="btn btn-success btn-sm flex-fill">✅ Approve</button>
-              <button type="submit" name="action" value="reject" class="btn btn-danger btn-sm flex-fill">❌ Reject</button>
+              <button type="submit" name="action" value="approve" class="btn btn-success btn-sm flex-fill"><i class="bi bi-check-circle me-1"></i> Approve</button>
+              <button type="submit" name="action" value="reject" class="btn btn-danger btn-sm flex-fill"><i class="bi bi-x-circle me-1"></i> Reject</button>
             </div>
             <input type="text" name="notes" class="form-control form-control-sm" placeholder="Notes (if rejecting)">
           </form>
