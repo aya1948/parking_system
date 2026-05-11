@@ -4,7 +4,7 @@ require_once __DIR__ . '/../config/session.php';
 requireRole('admin');
 require_once __DIR__ . '/../classes/User.php';
 
-$pageTitle = 'Manage Users — CitySlot';
+$pageTitle = 'Manage Users — Rakna';
 $user      = currentUser();
 $userObj   = new User();
 

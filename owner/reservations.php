@@ -4,7 +4,7 @@ require_once __DIR__ . '/../config/session.php';
 requireRole('owner');
 require_once __DIR__ . '/../config/db.php';
 
-$pageTitle = 'Spot Reservations — CitySlot';
+$pageTitle = 'Spot Reservations — Rakna';
 $user      = currentUser();
 $db        = getDB();
 $status    = $_GET['status'] ?? '';

@@ -32,7 +32,7 @@ $result  = $userObj->register($name, $email, $password, $role, $phone);
 if ($result['success']) {
     $login = $userObj->login($email, $password);
     if ($login['success']) {
-        $_SESSION['flash'] = ['type'=>'success', 'msg'=>'Welcome to CitySlot, ' . $name . '!'];
+        $_SESSION['flash'] = ['type'=>'success', 'msg'=>'Welcome to Rakna, ' . $name . '!'];
         header("Location: $base/index.php?action=" . ($role === 'owner' ? 'owner_dashboard' : 'driver_dashboard'));
     } else {
         header("Location: $base/index.php?action=login");

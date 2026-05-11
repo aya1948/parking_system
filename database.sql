@@ -21,6 +21,7 @@ CREATE TABLE users (
     blacklist_reason VARCHAR(255) DEFAULT NULL,
     unpaid_fines_count INT DEFAULT 0,
     preferred_language VARCHAR(10) DEFAULT 'en',
+    preferred_currency VARCHAR(10) DEFAULT 'EGP',
     loyalty_points INT DEFAULT 0,
     created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -372,6 +373,10 @@ INSERT INTO users (full_name, email, password_hash, role) VALUES
 
 INSERT INTO promo_codes (code, discount_type, discount_value, valid_from, valid_until) VALUES
 ('WELCOME10', 'percentage', 10.00, NOW(), DATE_ADD(NOW(), INTERVAL 1 YEAR));
+
+-- Internal system promo for recurring bookings (high max_uses, long validity)
+INSERT INTO promo_codes (code, discount_type, discount_value, max_uses, valid_from, valid_until) VALUES
+('RECURRING_DISCOUNT', 'percentage', 10.00, 999999, '2020-01-01', '2099-12-31');
 
 INSERT INTO peak_hour_rules (day_of_week, start_time, end_time, multiplier, event_name) VALUES
 (NULL, '08:00:00', '10:00:00', 1.50, 'Morning Rush Hour'),

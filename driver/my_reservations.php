@@ -149,10 +149,11 @@ require_once __DIR__ . '/../includes/header.php';
           </td>
           <td>
             <div class="d-flex gap-1 flex-wrap">
-              <?php if ($r['status'] === 'confirmed'): ?>
-                <a href="/parking_system/index.php?action=qr_checkin&id=<?= $r['reservation_id'] ?>" class="btn btn-sm btn-success">Check In</a>
-                <a href="/parking_system/index.php?action=cancel_reservation&id=<?= $r['reservation_id'] ?>" class="btn btn-sm btn-outline-danger"
-                   onclick="return confirm('Cancel this reservation?')">Cancel</a>
+              <?php if (in_array($r['status'], ['confirmed', 'pending'])): ?>
+                <a href="<?= BASE_URL ?>/index.php?action=qr_checkin&id=<?= $r['reservation_id'] ?>" class="btn btn-sm btn-success">Check In</a>
+                <a href="<?= BASE_URL ?>/index.php?action=cancel_reservation&id=<?= $r['reservation_id'] ?>" class="btn btn-sm btn-outline-danger">
+                  <i class="bi bi-x-circle me-1"></i>Cancel
+                </a>
               <?php elseif ($r['status'] === 'active'): ?>
                 <a href="/parking_system/index.php?action=qr_checkout&id=<?= $r['reservation_id'] ?>" class="btn btn-sm btn-danger">Check Out</a>
                 <a href="/parking_system/index.php?action=extend_reservation&id=<?= $r['reservation_id'] ?>" class="btn btn-sm btn-outline-primary">Extend</a>

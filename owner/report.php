@@ -4,7 +4,7 @@ require_once __DIR__ . '/../config/session.php';
 requireRole('owner');
 require_once __DIR__ . '/../classes/Report.php';
 
-$pageTitle  = 'Monthly Report — CitySlot';
+$pageTitle  = 'Monthly Report — Rakna';
 $user       = currentUser();
 $reportObj  = new Report();
 $month      = (int)($_GET['month'] ?? date('n'));

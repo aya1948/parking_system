@@ -4,7 +4,7 @@ require_once __DIR__ . '/../config/session.php';
 requireRole('admin');
 require_once __DIR__ . '/../config/db.php';
 
-$pageTitle = 'Promo Codes — CitySlot';
+$pageTitle = 'Promo Codes — Rakna';
 $db = getDB();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

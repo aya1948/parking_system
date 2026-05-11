@@ -5,7 +5,7 @@ requireRole('admin');
 require_once __DIR__ . '/../classes/User.php';
 require_once __DIR__ . '/../config/db.php';
 
-$pageTitle = 'Blacklist Management — CitySlot';
+$pageTitle = 'Blacklist Management — Rakna';
 $user      = currentUser();
 $b         = BASE_URL;
 $userObj   = new User();

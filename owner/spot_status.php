@@ -4,7 +4,7 @@ require_once __DIR__ . '/../config/session.php';
 requireRole('owner');
 require_once __DIR__ . '/../classes/ParkingSpot.php';
 
-$pageTitle = 'Spot Status — CitySlot';
+$pageTitle = 'Spot Status — Rakna';
 $user      = currentUser();
 $spotObj   = new ParkingSpot();
 $spotId    = (int)($_GET['id'] ?? 0);

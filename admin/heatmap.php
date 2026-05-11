@@ -4,7 +4,7 @@ require_once __DIR__ . '/../config/session.php';
 requireRole('admin');
 require_once __DIR__ . '/../classes/Report.php';
 
-$pageTitle = 'Revenue Heatmap — CitySlot';
+$pageTitle = 'Revenue Heatmap — Rakna';
 $reportObj = new Report();
 $heatData  = $reportObj->getRevenueHeatmapData();
 

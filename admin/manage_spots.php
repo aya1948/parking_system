@@ -6,7 +6,7 @@ require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../classes/ParkingSpot.php';
 require_once __DIR__ . '/../classes/Fine.php';
 
-$pageTitle = 'Manage Spots — CitySlot';
+$pageTitle = 'Manage Spots — Rakna';
 $user      = currentUser();
 $db        = getDB();
 $b         = BASE_URL;

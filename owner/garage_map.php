@@ -4,7 +4,7 @@ require_once __DIR__ . '/../config/session.php';
 requireRole('owner','admin');
 require_once __DIR__ . '/../classes/Garage.php';
 
-$pageTitle  = 'Garage Map — CitySlot';
+$pageTitle  = 'Garage Map — Rakna';
 $user       = currentUser();
 $b          = BASE_URL;
 $garageObj  = new Garage();

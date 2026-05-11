@@ -4,7 +4,7 @@ require_once __DIR__ . '/../config/session.php';
 requireRole('driver');
 require_once __DIR__ . '/../classes/Pricing.php';
 
-$pageTitle  = 'Currency Converter — CitySlot';
+$pageTitle  = 'Currency Converter — Rakna';
 $user       = currentUser();
 $b          = BASE_URL;
 $pricingObj = new Pricing();

@@ -5,7 +5,7 @@ requireRole('admin');
 require_once __DIR__ . '/../classes/Fine.php';
 require_once __DIR__ . '/../config/db.php';
 
-$pageTitle = 'Emergency Override — CitySlot';
+$pageTitle = 'Emergency Override — Rakna';
 $user      = currentUser();
 $fineObj   = new Fine();
 $db        = getDB();

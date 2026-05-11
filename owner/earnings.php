@@ -6,7 +6,7 @@ require_once __DIR__ . '/../classes/Report.php';
 require_once __DIR__ . '/../classes/Pricing.php';
 require_once __DIR__ . '/../config/db.php';
 
-$pageTitle = 'Earnings — CitySlot';
+$pageTitle = 'Earnings — Rakna';
 $user      = currentUser();
 $db        = getDB();
 

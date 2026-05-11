@@ -4,7 +4,7 @@ require_once __DIR__ . '/../config/session.php';
 requireRole('admin');
 require_once __DIR__ . '/../classes/Fine.php';
 
-$pageTitle = 'Audit Log — CitySlot';
+$pageTitle = 'Audit Log — Rakna';
 $fineObj   = new Fine();
 $filter    = $_GET['action_filter'] ?? '';
 $logs      = $fineObj->getAuditLog(200, $filter ?: null);

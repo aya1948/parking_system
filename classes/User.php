@@ -25,13 +25,13 @@ class User {
     }
 
     public function getUserById(int $id): ?array {
-        $stmt = $this->db->prepare("SELECT user_id, full_name, email, phone, role, is_active, is_blacklisted, loyalty_points, preferred_language, created_at FROM users WHERE user_id = ?");
+        $stmt = $this->db->prepare("SELECT user_id, full_name, email, phone, role, is_active, is_blacklisted, loyalty_points, preferred_language, preferred_currency, created_at FROM users WHERE user_id = ?");
         $stmt->execute([$id]);
         return $stmt->fetch() ?: null;
     }
 
     public function updateProfile(int $userId, array $data): bool {
-        $allowed = ['full_name', 'phone', 'preferred_language'];
+        $allowed = ['full_name', 'phone', 'preferred_language', 'preferred_currency'];
         $fields = [];
         $values = [];
         foreach ($allowed as $field) {

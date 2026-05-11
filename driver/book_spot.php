@@ -173,10 +173,17 @@ require_once __DIR__ . '/../includes/header.php';
               </div>
             </div>
 
-            <div class="alert alert-info small mb-3">
-              <i class="bi bi-receipt me-1"></i>
-              A full price breakdown receipt (including VAT 14%) will be shown after booking.
+            <!-- LIVE PRICE PREVIEW -->
+            <div id="pricePreview" class="card mb-3" style="display:none; border:1px solid #480959;">
+              <div class="card-header py-2" style="background:#480959; color:#fff; font-size:.85rem;">
+                <i class="bi bi-receipt me-1"></i> Price Breakdown
+              </div>
+              <div class="card-body p-3" id="priceBreakdownBody">
+                <div class="text-center text-muted small">Calculating...</div>
+              </div>
             </div>
+            <div id="priceError" class="alert alert-warning small mb-3" style="display:none;"></div>
+
             <button type="submit" class="btn btn-primary w-100 btn-lg" <?= empty($vehicles) ? 'disabled' : '' ?>>
               <i class="bi bi-check-circle me-1"></i> Confirm Booking
             </button>
@@ -188,5 +195,84 @@ require_once __DIR__ . '/../includes/header.php';
 </div>
 </div>
 </div>
+
+<script>
+(function () {
+  const spotId   = <?= (int)$spot['spot_id'] ?>;
+  const baseUrl  = '<?= BASE_URL ?>';
+  let previewTimer = null;
+
+  function triggerPreview() {
+    clearTimeout(previewTimer);
+    previewTimer = setTimeout(fetchPreview, 500);
+  }
+
+  function fetchPreview() {
+    const start  = document.getElementById('startTime').value;
+    const end    = document.getElementById('endTime').value;
+    const promo  = document.getElementById('promoCode').value.trim();
+    const errBox = document.getElementById('priceError');
+    const box    = document.getElementById('pricePreview');
+
+    errBox.style.display = 'none';
+    if (!start || !end) { box.style.display = 'none'; return; }
+
+    box.style.display = 'block';
+    document.getElementById('priceBreakdownBody').innerHTML =
+      '<div class="text-center text-muted small py-2"><span class="spinner-border spinner-border-sm me-1"></span>Calculating...</div>';
+
+    const fd = new FormData();
+    fd.append('spot_id',    spotId);
+    fd.append('start_time', start);
+    fd.append('end_time',   end);
+    fd.append('promo_code', promo);
+
+    fetch(baseUrl + '/index.php?action=price_preview', { method: 'POST', body: fd })
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) {
+          box.style.display = 'none';
+          errBox.textContent = data.error;
+          errBox.style.display = 'block';
+          return;
+        }
+        const b = data.breakdown;
+        let html = `
+          <div class="d-flex justify-content-between small mb-1">
+            <span class="text-muted">Base Price</span><span>${b.base_price.toFixed(2)} EGP</span>
+          </div>`;
+        if (b.peak_multiplier > 1) html += `
+          <div class="d-flex justify-content-between small mb-1 text-warning">
+            <span>Peak-hour ×${b.peak_multiplier}</span><span>${b.after_peak.toFixed(2)} EGP</span>
+          </div>`;
+        if (parseFloat(b.promo_discount) > 0) html += `
+          <div class="d-flex justify-content-between small mb-1 text-success">
+            <span>Promo Discount</span><span>− ${parseFloat(b.promo_discount).toFixed(2)} EGP</span>
+          </div>`;
+        html += `
+          <div class="d-flex justify-content-between small mb-1 text-muted">
+            <span>Subtotal</span><span>${b.subtotal.toFixed(2)} EGP</span>
+          </div>
+          <div class="d-flex justify-content-between small mb-2 text-muted">
+            <span>VAT 14%</span><span>${b.vat.toFixed(2)} EGP</span>
+          </div>
+          <hr class="my-1">
+          <div class="d-flex justify-content-between fw-bold">
+            <span>Total</span><span style="color:#480959;">${b.total.toFixed(2)} EGP</span>
+          </div>`;
+        document.getElementById('priceBreakdownBody').innerHTML = html;
+      })
+      .catch(() => {
+        box.style.display = 'none';
+        errBox.textContent = 'Could not calculate price. Please try again.';
+        errBox.style.display = 'block';
+      });
+  }
+
+  document.getElementById('startTime').addEventListener('change', triggerPreview);
+  document.getElementById('endTime').addEventListener('change', triggerPreview);
+  document.getElementById('applyPromo').addEventListener('click', fetchPreview);
+})();
+</script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

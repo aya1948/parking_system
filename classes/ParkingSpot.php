@@ -14,11 +14,14 @@ class ParkingSpot {
     public function createSpot(array $data): array {
         $stmt = $this->db->prepare("
             INSERT INTO parking_spots 
-            (owner_id, title, description, address, latitude, longitude, spot_type, price_per_hour, base_price, max_height_cm, max_width_cm, has_ev_charger, city_zone)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)
+            (owner_id, garage_id, spot_number, title, description, address, latitude, longitude, spot_type, price_per_hour, base_price, max_height_cm, max_width_cm, has_ev_charger, city_zone)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         ");
         $stmt->execute([
-            $data['owner_id'], $data['title'], $data['description'] ?? '',
+            $data['owner_id'],
+            $data['garage_id'] ?? null,
+            $data['spot_number'] ?? null,
+            $data['title'], $data['description'] ?? '',
             $data['address'], $data['latitude'] ?? null, $data['longitude'] ?? null,
             $data['spot_type'] ?? 'driveway',
             $data['price_per_hour'], $data['price_per_hour'], // base = initial price
@@ -46,7 +49,7 @@ class ParkingSpot {
         $spot = $this->getSpotById($spotId);
         if (!$spot || $spot['owner_id'] != $ownerId) return false;
 
-        $allowed = ['title','description','address','price_per_hour','max_height_cm','max_width_cm','has_ev_charger','city_zone'];
+        $allowed = ['title','description','address','price_per_hour','max_height_cm','max_width_cm','has_ev_charger','city_zone','garage_id','spot_number'];
         $fields = []; $values = [];
         foreach ($allowed as $f) {
             if (isset($data[$f])) { $fields[] = "$f = ?"; $values[] = $data[$f]; }

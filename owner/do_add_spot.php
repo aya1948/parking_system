@@ -11,6 +11,8 @@ $spotObj = new ParkingSpot();
 
 $result = $spotObj->createSpot([
     'owner_id'      => $user['user_id'],
+    'garage_id'     => $_POST['garage_id'] ? (int)$_POST['garage_id'] : null,
+    'spot_number'   => trim($_POST['spot_number'] ?? '') ?: null,
     'title'         => trim($_POST['title'] ?? ''),
     'description'   => trim($_POST['description'] ?? ''),
     'address'       => trim($_POST['address'] ?? ''),

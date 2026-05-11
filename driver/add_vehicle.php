@@ -4,7 +4,7 @@ require_once __DIR__ . '/../config/session.php';
 requireRole('driver');
 require_once __DIR__ . '/../classes/Vehicle.php';
 
-$pageTitle = 'Add Vehicle — CitySlot';
+$pageTitle = 'Add Vehicle — Rakna';
 $user      = currentUser();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

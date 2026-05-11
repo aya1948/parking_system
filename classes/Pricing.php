@@ -18,7 +18,7 @@ class Pricing {
      * Calculates total price including:
      * peak-hour multiplier, loyalty discount, promo code, VAT.
      */
-    public function calculateTotal(int $spotId, string $start, string $end, int $driverId, ?string $promoCode): array {
+    public function calculateTotal(int $spotId, string $start, string $end, int $driverId, ?string $promoCode, bool $incrementPromo = false): array {
         $stmt = $this->db->prepare("SELECT price_per_hour, base_price FROM parking_spots WHERE spot_id = ?");
         $stmt->execute([$spotId]);
         $spot = $stmt->fetch();
@@ -38,7 +38,7 @@ class Pricing {
         $promoDiscount = 0;
         $promoInfo     = null;
         if ($promoCode) {
-            $promoInfo = $this->validatePromoCode($promoCode);
+            $promoInfo = $this->validatePromoCode($promoCode, $incrementPromo);
             if ($promoInfo['valid']) {
                 if ($promoInfo['discount_type'] === 'percentage') {
                     $promoDiscount = $priceAfterLoyalty * ($promoInfo['discount_value'] / 100);
@@ -174,8 +174,11 @@ class Pricing {
     /**
      * Validates promo code: checks expiry, usage limit, active status.
      * Ensures discount doesn't apply to expired codes mid-session.
+     *
+     * @param bool $incrementUsage  Set true ONLY when actually confirming a booking,
+     *                              false for price previews (default: false for safety).
      */
-    public function validatePromoCode(string $code): array {
+    public function validatePromoCode(string $code, bool $incrementUsage = false): array {
         $stmt = $this->db->prepare("
             SELECT * FROM promo_codes
             WHERE code = ?
@@ -191,9 +194,11 @@ class Pricing {
             return ['valid' => false, 'message' => 'Invalid, expired, or fully used promo code.'];
         }
 
-        // Increment usage
-        $stmt = $this->db->prepare("UPDATE promo_codes SET current_uses = current_uses + 1 WHERE promo_id = ?");
-        $stmt->execute([$promo['promo_id']]);
+        // Only increment usage when actually applying (not during preview)
+        if ($incrementUsage) {
+            $stmt = $this->db->prepare("UPDATE promo_codes SET current_uses = current_uses + 1 WHERE promo_id = ?");
+            $stmt->execute([$promo['promo_id']]);
+        }
 
         return [
             'valid'          => true,

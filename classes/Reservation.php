@@ -56,7 +56,7 @@ class Reservation {
 
         // 5. Calculate price
         $hours        = (strtotime($end) - strtotime($start)) / 3600;
-        $pricing      = $this->pricing->calculateTotal($spotId, $start, $end, $driverId, $promoCode);
+        $pricing      = $this->pricing->calculateTotal($spotId, $start, $end, $driverId, $promoCode, true);
         $totalAmount  = $pricing['total'];
         $discount     = $pricing['discount'];
 
@@ -313,6 +313,9 @@ class Reservation {
 
         $stmt = $this->db->prepare("UPDATE reservations SET end_time = ?, status = 'extended', total_amount = total_amount + ? WHERE reservation_id = ?");
         $stmt->execute([$newEnd, $extraCost, $reservationId]);
+
+        // Record the extension charge as a new transaction in escrow
+        $this->pricing->lockEscrow($reservationId, $driverId, $extraCost);
 
         return [
             'success'    => true,

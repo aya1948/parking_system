@@ -5,7 +5,7 @@ requireRole('admin');
 require_once __DIR__ . '/../classes/ParkingSpot.php';
 require_once __DIR__ . '/../config/db.php';
 
-$pageTitle = 'Owner Verifications — CitySlot';
+$pageTitle = 'Owner Verifications — Rakna';
 $user      = currentUser();
 $spotObj   = new ParkingSpot();
 $db        = getDB();

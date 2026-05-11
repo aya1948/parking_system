@@ -5,7 +5,7 @@ requireRole('owner');
 require_once __DIR__ . '/../classes/Garage.php';
 require_once __DIR__ . '/../config/db.php';
 
-$pageTitle = 'My Garages & Spots — CitySlot';
+$pageTitle = 'My Garages & Spots — Rakna';
 $user      = currentUser();
 $b         = BASE_URL;
 $garageObj = new Garage();

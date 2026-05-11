@@ -155,7 +155,7 @@ class Report {
             td { padding: 8px 10px; border-bottom: 1px solid #ddd; }
             tr:nth-child(even) { background: #f9f9f9; }
         </style></head><body>
-        <h1>🅿️ CitySlot - Monthly Earnings Report</h1>
+        <h1>🅿️ Rakna - Monthly Earnings Report</h1>
         <p><strong>Owner:</strong> {$owner['full_name']} ({$owner['email']})</p>
         <p><strong>Period:</strong> {$monthName} {$year}</p>
         <hr>
@@ -179,7 +179,7 @@ class Report {
         foreach ($data['top_hours'] as $h) {
             $html .= "<tr><td>{$h['hour']}:00</td><td>{$h['count']}</td></tr>";
         }
-        $html .= "</table><br><p style='color:#999;font-size:12px;'>Generated on " . date('Y-m-d H:i') . " | CitySlot Parking System</p></body></html>";
+        $html .= "</table><br><p style='color:#999;font-size:12px;'>Generated on " . date('Y-m-d H:i') . " | Rakna Parking System</p></body></html>";
 
         file_put_contents($reportFile, $html);
         return $reportFile;

@@ -8,7 +8,7 @@ require_once __DIR__ . '/../classes/Vehicle.php';
 require_once __DIR__ . '/../config/db.php';
 require_once __DIR__ . '/../classes/Pricing.php';
 
-$pageTitle  = 'Pick a Spot — CitySlot';
+$pageTitle  = 'Pick a Spot — Rakna';
 $user       = currentUser();
 $b          = BASE_URL;
 $garageObj  = new Garage();

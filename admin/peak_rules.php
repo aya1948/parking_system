@@ -4,7 +4,7 @@ require_once __DIR__ . '/../config/session.php';
 requireRole('admin');
 require_once __DIR__ . '/../config/db.php';
 
-$pageTitle = 'Peak Hour Rules — CitySlot';
+$pageTitle = 'Peak Hour Rules — Rakna';
 $db = getDB();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

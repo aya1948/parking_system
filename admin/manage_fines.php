@@ -4,7 +4,7 @@ require_once __DIR__ . '/../config/session.php';
 requireRole('admin');
 require_once __DIR__ . '/../classes/Fine.php';
 
-$pageTitle = 'Manage Fines — CitySlot';
+$pageTitle = 'Manage Fines — Rakna';
 $user      = currentUser();
 $fineObj   = new Fine();
 

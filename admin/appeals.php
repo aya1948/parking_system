@@ -5,7 +5,7 @@ requireRole('admin');
 require_once __DIR__ . '/../classes/Fine.php';
 require_once __DIR__ . '/../config/db.php';
 
-$pageTitle = 'Fine Appeals — CitySlot';
+$pageTitle = 'Fine Appeals — Rakna';
 $user      = currentUser();
 $fineObj   = new Fine();
 $db        = getDB();
