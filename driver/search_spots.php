@@ -21,8 +21,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         'zone'           => trim($_POST['zone']         ?? ''),
         'max_price'      => $_POST['max_price']         ?? '',
         'needs_ev'       => !empty($_POST['needs_ev'])  ? 1 : 0,
-        'vehicle_height' => $_POST['vehicle_height']    ?? '',
-        'vehicle_width'  => $_POST['vehicle_width']     ?? '',
         'start_time'     => $_POST['start_time']        ?? date('Y-m-d H:i:s'),
         'end_time'       => $_POST['end_time']          ?? date('Y-m-d H:i:s', strtotime('+1 hour')),
     ];
@@ -97,7 +95,7 @@ require_once __DIR__ . '/../includes/header.php';
             <label class="form-label fw-semibold">Zone / Area</label>
             <?php if (!empty($zones)): ?>
             <select name="zone" class="form-select mb-1" id="zoneSelect">
-              <option value=""><i class="bi bi-globe"></i> All Zones</option>
+              <option value=""> All Zones</option>
               <?php foreach ($zones as $z): ?>
               <option value="<?= htmlspecialchars($z['city_zone']) ?>"
                       <?= ($_POST['zone'] ?? '') === $z['city_zone'] ? 'selected' : '' ?>>
@@ -140,8 +138,6 @@ require_once __DIR__ . '/../includes/header.php';
               <option value="">Select vehicle (optional)</option>
               <?php foreach ($vehicles as $v): ?>
               <option value="<?= $v['vehicle_id'] ?>"
-                      data-height="<?= $v['height_cm'] ?>"
-                      data-width="<?= $v['width_cm'] ?>"
                       data-ev="<?= $v['is_ev'] ?>"
                       <?= $v['is_default'] ? 'selected' : '' ?>>
                 <?= htmlspecialchars($v['license_plate'].' — '.$v['make'].' '.$v['model']) ?>
@@ -161,11 +157,6 @@ require_once __DIR__ . '/../includes/header.php';
             <i class="bi bi-search me-1"></i>Search Garages
           </button>
         </div>
-
-        <input type="hidden" name="vehicle_height" id="vehicleHeight"
-               value="<?= htmlspecialchars($_POST['vehicle_height'] ?? '') ?>">
-        <input type="hidden" name="vehicle_width"  id="vehicleWidth"
-               value="<?= htmlspecialchars($_POST['vehicle_width'] ?? '') ?>">
       </form>
     </div>
   </div>
@@ -216,7 +207,7 @@ require_once __DIR__ . '/../includes/header.php';
         <div class="row g-3">
           <?php foreach ($zoneGarages as $g): ?>
           <?php
-          $isFull     = $g['free_spots'] === 0;
+          $isFull     = ((int)$g['free_spots']) === 0;
           $occupancy  = $g['total_spots'] > 0
                         ? round(($g['total_spots'] - $g['free_spots']) / $g['total_spots'] * 100)
                         : 0;
@@ -289,13 +280,13 @@ require_once __DIR__ . '/../includes/header.php';
                 <!-- ACTION BUTTONS -->
                 <?php if ($isFull): ?>
                 <div class="d-flex gap-2">
-                  <a href="<?= $b ?>/index.php?action=waitlist&spot_id=<?= $g['garage_id'] ?>"
+                  <a href="<?= $b ?>/index.php?action=waitlist&garage_id=<?= $g['garage_id'] ?>"
                      class="btn btn-warning btn-sm flex-fill">
                     <i class="bi bi-bell me-1"></i> Watch Garage
                   </a>
                 </div>
                 <?php else: ?>
-                <a href="<?= $b ?>/index.php?action=pick_spot&garage_id=<?= $g['garage_id'] ?>&start_time=<?= urlencode($_POST['start_time'] ?? '') ?>&end_time=<?= urlencode($_POST['end_time'] ?? '') ?>&vehicle_height=<?= urlencode($_POST['vehicle_height'] ?? '') ?>&vehicle_width=<?= urlencode($_POST['vehicle_width'] ?? '') ?>&needs_ev=<?= urlencode($_POST['needs_ev'] ?? '') ?>"
+                <a href="<?= $b ?>/index.php?action=pick_spot&garage_id=<?= $g['garage_id'] ?>&start_time=<?= urlencode($_POST['start_time'] ?? '') ?>&end_time=<?= urlencode($_POST['end_time'] ?? '') ?>&needs_ev=<?= urlencode($_POST['needs_ev'] ?? '') ?>"
                    class="btn btn-primary w-100 fw-bold">
                   <i class="bi bi-car-front me-1"></i>Pick a Spot →
                 </a>
@@ -340,11 +331,9 @@ require_once __DIR__ . '/../includes/header.php';
 </div><!-- /.container -->
 
 <script>
-// Auto-fill vehicle dimensions from dropdown
+// Auto-fill vehicle EV from dropdown
 document.getElementById('vehicleSelect')?.addEventListener('change', function() {
     const opt = this.options[this.selectedIndex];
-    document.getElementById('vehicleHeight').value = opt.dataset.height || '';
-    document.getElementById('vehicleWidth').value  = opt.dataset.width  || '';
     if (opt.dataset.ev === '1') document.getElementById('needsEv').checked = true;
 });
 

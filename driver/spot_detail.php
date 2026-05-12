@@ -34,9 +34,6 @@ require_once __DIR__ . '/../classes/Vehicle.php';
 $reviewObj = new Review();
 $reviews   = $reviewObj->getSpotReviews($spotId, 10);
 
-// Get nearby alternatives
-$nearby = $spotObj->getNearbyAlternatives($spotId, 3);
-
 require_once __DIR__ . '/../includes/header.php';
 ?>
 <style>
@@ -122,24 +119,23 @@ require_once __DIR__ . '/../includes/header.php';
           </div>
           <p class="text-muted"><i class="bi bi-geo-alt me-1"></i><?= htmlspecialchars($spot['address']) ?></p>
           <div class="row g-3 mb-3">
-            <div class="col-4 text-center">
+            <div class="col-6 text-center">
               <div class="fw-bold text-primary fs-4"><?= number_format($spot['price_per_hour'],2) ?> EGP</div>
               <small class="text-muted">per hour</small>
             </div>
-            <div class="col-4 text-center">
-              <div class="fw-bold text-warning fs-4"><?= number_format($spot['trust_score'],1) ?><i class="bi bi-star-fill ms-1"></i></div>
-              <small class="text-muted"><?= $spot['total_reviews'] ?> reviews</small>
+            <div class="col-6 text-center">
+              <div class="fw-bold fs-5"><?= ucfirst($spot['spot_type']) ?></div>
+              <small class="text-muted">Type</small>
             </div>
-            <div class="col-4 text-center">
-              <div class="fw-bold fs-5"><?= number_format($spot['difficulty_score'],1) ?>/5</div>
-              <small class="text-muted">Difficulty</small>
-            </div>
+          </div>
+          <!-- Trust Score & Reviews -->
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <span class="text-warning fs-5"><?= str_repeat('★', round($spot['trust_score'] ?? 0)) ?><?= str_repeat('☆', 5 - round($spot['trust_score'] ?? 0)) ?></span>
+            <span class="text-muted small"><?= number_format($spot['trust_score'] ?? 0, 1) ?>/5 (<?= $spot['total_reviews'] ?? 0 ?> reviews)</span>
           </div>
           <div class="d-flex gap-2 flex-wrap mb-3">
             <span class="badge bg-secondary"><?= ucfirst($spot['spot_type']) ?></span>
             <?php if($spot['has_ev_charger']): ?><span class="badge bg-success"><i class="bi bi-lightning-charge me-1"></i>EV Charger</span><?php endif; ?>
-            <?php if($spot['max_height_cm']): ?><span class="badge bg-light text-dark">Max H: <?= $spot['max_height_cm'] ?>cm</span><?php endif; ?>
-            <?php if($spot['max_width_cm']): ?><span class="badge bg-light text-dark">Max W: <?= $spot['max_width_cm'] ?>cm</span><?php endif; ?>
           </div>
           <p class="text-muted"><?= nl2br(htmlspecialchars($spot['description']??'')) ?></p>
           <p class="small text-muted">Owner: <strong><?= htmlspecialchars($spot['owner_name']) ?></strong></p>
@@ -167,31 +163,6 @@ require_once __DIR__ . '/../includes/header.php';
           <?php endforeach; endif; ?>
         </div>
       </div>
-    </div>
-
-    <!-- NEARBY -->
-    <div class="col-md-5">
-      <?php if(!empty($nearby)): ?>
-      <div class="card">
-        <div class="card-header"><i class="bi bi-geo-alt-fill me-1"></i> Nearby Alternatives</div>
-        <div class="card-body p-0">
-          <?php foreach($nearby as $n): ?>
-          <div class="p-3 border-bottom">
-            <div class="d-flex justify-content-between align-items-center">
-              <div>
-                <strong class="small"><?= htmlspecialchars($n['title']) ?></strong>
-                <p class="small text-muted mb-0"><?= number_format($n['distance_km'],2) ?> km away</p>
-              </div>
-              <div class="text-end">
-                <div class="fw-bold text-primary small"><?= number_format($n['price_per_hour'],2) ?> EGP/hr</div>
-                <a href="<?= $b ?>/index.php?action=book_spot&id=<?= $n['spot_id'] ?>" class="btn btn-sm btn-outline-primary mt-1">Book</a>
-              </div>
-            </div>
-          </div>
-          <?php endforeach; ?>
-        </div>
-      </div>
-      <?php endif; ?>
     </div>
   </div>
 </div></div></div>

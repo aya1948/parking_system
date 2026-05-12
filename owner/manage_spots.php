@@ -121,14 +121,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pricePerHour  = (float)($_POST['price_per_hour'] ?? 0);
         $spotType      = $_POST['spot_type'] ?? 'standard';
         $hasEV         = isset($_POST['has_ev_charger']) ? 1 : 0;
-        $maxHeight     = $_POST['max_height_cm'] ?: null;
-        $maxWidth      = $_POST['max_width_cm'] ?: null;
 
         if ($spotNumber === '') {
             setFlash('error', 'Spot number is required.');
         } else {
-            $stmt = $db->prepare("INSERT INTO parking_spots (garage_id, owner_id, spot_number, title, spot_type, price_per_hour, has_ev_charger, max_height_cm, max_width_cm, status) VALUES (?,?,?,?,?,?,?,?,?,'available')");
-            $stmt->execute([$garageId, $user['user_id'], $spotNumber, "Spot $spotNumber", $spotType, $pricePerHour, $hasEV, $maxHeight, $maxWidth]);
+            $stmt = $db->prepare("INSERT INTO parking_spots (garage_id, owner_id, spot_number, title, spot_type, price_per_hour, has_ev_charger, status) VALUES (?,?,?,?,?,?,?,'available')");
+            $stmt->execute([$garageId, $user['user_id'], $spotNumber, "Spot $spotNumber", $spotType, $pricePerHour, $hasEV]);
             setFlash('success', 'Spot added successfully.');
         }
         header("Location: $b/index.php?action=manage_spots&garage_id=$garageId"); exit;
@@ -189,11 +187,11 @@ require_once __DIR__ . '/../includes/header.php';
     <div class="card-body">
       <form method="POST" class="row g-3">
         <input type="hidden" name="action_type" value="add_spot">
-        <div class="col-md-2">
+        <div class="col-md-3">
           <label class="form-label">Spot Number *</label>
           <input type="text" name="spot_number" class="form-control" placeholder="e.g. A12" required>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-3">
           <label class="form-label">Type</label>
           <select name="spot_type" class="form-select">
             <option value="standard">Standard</option>
@@ -202,19 +200,11 @@ require_once __DIR__ . '/../includes/header.php';
             <option value="motorcycle">Motorcycle</option>
           </select>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-3">
           <label class="form-label">Price / Hour</label>
           <input type="number" name="price_per_hour" class="form-control" value="25.00" step="0.50" min="1" required>
         </div>
-        <div class="col-md-2">
-          <label class="form-label">Max H (cm)</label>
-          <input type="number" name="max_height_cm" class="form-control" placeholder="Optional">
-        </div>
-        <div class="col-md-2">
-          <label class="form-label">Max W (cm)</label>
-          <input type="number" name="max_width_cm" class="form-control" placeholder="Optional">
-        </div>
-        <div class="col-md-2 d-flex align-items-end">
+        <div class="col-md-3 d-flex align-items-end">
           <div class="form-check">
             <input class="form-check-input" type="checkbox" name="has_ev_charger" id="newEv">
             <label class="form-check-label" for="newEv">EV Charger</label>
@@ -248,7 +238,6 @@ require_once __DIR__ . '/../includes/header.php';
               <th>Spot Number</th>
               <th>Type</th>
               <th>Price (EGP/hr)</th>
-              <th>Dimensions</th>
               <th>EV</th>
               <th>Status</th>
               <th>Actions</th>
@@ -261,7 +250,6 @@ require_once __DIR__ . '/../includes/header.php';
               <td><span class="badge bg-dark font-monospace"><?= htmlspecialchars($s['spot_number']) ?></span></td>
               <td><?= ucfirst($s['spot_type'] ?? 'standard') ?></td>
               <td><?= number_format($s['price_per_hour'], 2) ?> EGP</td>
-              <td><?= ($s['max_height_cm'] ?: '—') ?> x <?= ($s['max_width_cm'] ?: '—') ?> cm</td>
               <td><?= $s['has_ev_charger'] ? '<i class="bi bi-lightning-charge text-success"></i> Yes' : '<span class="text-muted">No</span>' ?></td>
               <td>
                 <?php

@@ -20,10 +20,66 @@ $fines  = $fineObj->listAllFines($status, 200);
 
 require_once __DIR__ . '/../includes/header.php';
 ?>
+<style>
+/* ألوان Rakna */
+.nav-tabs .nav-link {
+    background-color: #fff !important;
+    color: #480959 !important;
+    border: 1px solid #480959;
+    border-radius: 0.4rem;
+    padding: 0.5rem 1rem;
+    margin: 0 0.2rem;
+}
+.nav-tabs .nav-link.active {
+    background-color: #480959 !important;
+    color: #ffffff !important;
+    font-weight: bold;
+}
+.nav-tabs .nav-link:hover {
+    /* لا تغيير عند التمرير */
+    background-color: #fff !important;
+    color: #480959 !important;
+}
+.btn-primary {
+    background-color: #480959;
+    border-color: #480959;
+}
+.btn-primary:hover {
+    background-color: #8A2888;
+    border-color: #8A2888;
+}
+.card-header {
+    background-color: #480959;
+    color: #fff;
+    font-weight: bold;
+}
+</style>
+
 <div class="container-fluid px-0"><div class="row g-0">
 <?php require_once __DIR__ . '/../includes/sidebar.php'; ?>
 <div class="col-md-10 p-4">
-  <h4 class="fw-bold mb-4">🚨 Fine Management</h4>
+  <h4 class="fw-bold mb-4"><i class="bi bi-exclamation-triangle-fill me-2"></i>Fine Management</h4>
+
+  <!-- QUICK ISSUE FINE -->
+  <div class="card mb-4">
+    <div class="card-header"><i class="bi bi-plus-circle me-1"></i> Issue Manual Fine</div>
+    <div class="card-body">
+      <form method="POST" class="row g-3">
+        <input type="hidden" name="action" value="issue">
+        <div class="col-md-4">
+          <label class="form-label">Driver ID</label>
+          <input type="number" name="driver_id" class="form-control" placeholder="User ID of driver" required>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">Spot ID</label>
+          <input type="number" name="spot_id" class="form-control" placeholder="Parking spot ID" required>
+        </div>
+        <div class="col-md-4 d-flex align-items-end">
+          <button type="submit" class="btn btn-primary w-100"><i class="bi bi-check-circle me-1"></i> Issue Fine</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- STATUS FILTER -->
   <ul class="nav nav-tabs mb-3">
@@ -32,6 +88,7 @@ require_once __DIR__ . '/../includes/header.php';
     <?php endforeach; ?>
   </ul>
 
+  <!-- FINES TABLE -->
   <div class="card">
     <div class="table-responsive">
       <table class="table table-hover align-middle mb-0">

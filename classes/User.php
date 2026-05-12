@@ -25,7 +25,7 @@ class User {
     }
 
     public function getUserById(int $id): ?array {
-        $stmt = $this->db->prepare("SELECT user_id, full_name, email, phone, role, is_active, is_blacklisted, loyalty_points, preferred_language, preferred_currency, created_at FROM users WHERE user_id = ?");
+        $stmt = $this->db->prepare("SELECT user_id, full_name, email, phone, role, is_active, is_blacklisted, preferred_language, preferred_currency, created_at FROM users WHERE user_id = ?");
         $stmt->execute([$id]);
         return $stmt->fetch() ?: null;
     }
@@ -94,7 +94,6 @@ class User {
             return ['success' => false, 'message' => 'Your account has been suspended. Reason: ' . $user['blacklist_reason']];
         }
 
-        // Store in session (never store password_hash)
         unset($user['password_hash']);
         $_SESSION['user_id'] = $user['user_id'];
         $_SESSION['user']    = $user;
@@ -128,10 +127,6 @@ class User {
 
     // ─── NON-CRUD: Blacklist Manager ─────────────────────────
 
-    /**
-     * Automatically bars drivers with more than 3 unpaid fines.
-     * Checks current unpaid fines count and blacklists if threshold exceeded.
-     */
     public function checkAndApplyBlacklist(int $driverId): bool {
         $stmt = $this->db->prepare("SELECT COUNT(*) as cnt FROM fines WHERE driver_id = ? AND status = 'unpaid'");
         $stmt->execute([$driverId]);
@@ -142,7 +137,7 @@ class User {
             $stmt = $this->db->prepare("UPDATE users SET is_blacklisted = 1, blacklist_reason = ?, unpaid_fines_count = ? WHERE user_id = ?");
             $stmt->execute([$reason, $count, $driverId]);
             $this->auditLog(null, 'AUTO_BLACKLIST', 'users', $driverId, null, $reason);
-            return true; // was blacklisted
+            return true;
         }
         return false;
     }
@@ -152,33 +147,6 @@ class User {
         $result = $stmt->execute([$driverId]);
         $this->auditLog($adminId, 'BLACKLIST_LIFTED', 'users', $driverId);
         return $result;
-    }
-
-    // ─── NON-CRUD: Loyalty Points ─────────────────────────────
-
-    public function addLoyaltyPoints(int $userId, int $points): void {
-        $stmt = $this->db->prepare("UPDATE users SET loyalty_points = loyalty_points + ? WHERE user_id = ?");
-        $stmt->execute([$points, $userId]);
-    }
-
-    /**
-     * Tiered loyalty discount: returns discount % based on monthly bookings.
-     */
-    public function getLoyaltyDiscount(int $userId): float {
-        $stmt = $this->db->prepare("
-            SELECT COUNT(*) as monthly_count 
-            FROM reservations 
-            WHERE driver_id = ? 
-              AND status IN ('completed','active')
-              AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)
-        ");
-        $stmt->execute([$userId]);
-        $count = (int)$stmt->fetchColumn();
-
-        if ($count >= 20) return 0.20;      // 20% discount
-        if ($count >= 10) return 0.10;      // 10% discount
-        if ($count >= 5)  return 0.05;      // 5% discount
-        return 0.00;
     }
 
     // ─── Helpers ──────────────────────────────────────────────

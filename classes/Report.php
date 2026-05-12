@@ -9,200 +9,147 @@ class Report {
         $this->db = getDB();
     }
 
-    // ─── NON-CRUD: Revenue Heatmap Data ──────────────────────
+    public function getSystemStats(): array {
+        $stats = [];
 
-    /**
-     * Aggregates revenue by city zone for municipal heatmap visualization.
-     */
-    public function getRevenueHeatmapData(): array {
-        $stmt = $this->db->prepare("
-            SELECT 
-                s.city_zone,
-                s.latitude,
-                s.longitude,
-                COUNT(r.reservation_id) AS total_bookings,
-                SUM(t.amount) AS total_revenue,
-                AVG(t.amount) AS avg_transaction
-            FROM parking_spots s
-            LEFT JOIN reservations r ON s.spot_id = r.spot_id AND r.status = 'completed'
-            LEFT JOIN transactions t ON r.reservation_id = t.reservation_id
-            GROUP BY s.city_zone, s.latitude, s.longitude
-            ORDER BY total_revenue DESC
-        ");
-        $stmt->execute();
-        return $stmt->fetchAll();
+        $stmt = $this->db->query("SELECT COUNT(*) FROM users WHERE is_active = 1");
+        $stats['total_users'] = (int)$stmt->fetchColumn();
+
+        $stmt = $this->db->query("SELECT COUNT(*) FROM parking_spots WHERE is_verified = 1");
+        $stats['total_spots'] = (int)$stmt->fetchColumn();
+
+        $stmt = $this->db->query("SELECT COUNT(*) FROM reservations WHERE status = 'completed'");
+        $stats['total_reservations'] = (int)$stmt->fetchColumn();
+
+        $stmt = $this->db->query("SELECT COUNT(*) FROM reservations WHERE status IN ('confirmed','active','extended')");
+        $stats['active_now'] = (int)$stmt->fetchColumn();
+
+        $stmt = $this->db->query("SELECT COALESCE(SUM(amount), 0) FROM transactions WHERE payment_status = 'released_to_owner'");
+        $stats['total_revenue'] = (float)$stmt->fetchColumn();
+
+        $stmt = $this->db->query("SELECT COUNT(*) FROM owner_verifications WHERE status = 'pending'");
+        $stats['pending_verif'] = (int)$stmt->fetchColumn();
+
+        $stmt = $this->db->query("SELECT COUNT(*) FROM fine_appeals WHERE status = 'pending'");
+        $stats['open_appeals'] = (int)$stmt->fetchColumn();
+
+        $stmt = $this->db->query("SELECT COUNT(*) FROM users WHERE is_blacklisted = 1");
+        $stats['blacklisted_users'] = (int)$stmt->fetchColumn();
+
+        return $stats;
     }
 
-    // ─── NON-CRUD: Sensor Health Monitor ─────────────────────
-
-    /**
-     * Tracks uptime of virtual parking sensors.
-     * Flags sensors that haven't sent a heartbeat in >10 minutes.
-     */
-    public function getSensorHealthReport(): array {
-        $stmt = $this->db->prepare("
-            SELECT sh.*, s.title AS spot_title, s.address,
-                   TIMESTAMPDIFF(MINUTE, sh.last_heartbeat, NOW()) AS minutes_since_heartbeat
-            FROM sensor_health sh
-            JOIN parking_spots s ON sh.spot_id = s.spot_id
-            ORDER BY minutes_since_heartbeat DESC
-        ");
-        $stmt->execute();
-        $sensors = $stmt->fetchAll();
-
-        // Auto-flag offline sensors
-        foreach ($sensors as &$sensor) {
-            if ($sensor['minutes_since_heartbeat'] > 10) {
-                $sensor['status'] = 'offline';
-                $stmt2 = $this->db->prepare("UPDATE sensor_health SET status = 'offline' WHERE sensor_id = ?");
-                $stmt2->execute([$sensor['sensor_id']]);
-            }
-        }
-        return $sensors;
-    }
-
-    public function updateSensorHeartbeat(int $spotId): bool {
-        $stmt = $this->db->prepare("
-            INSERT INTO sensor_health (spot_id, last_heartbeat, status)
-            VALUES (?, NOW(), 'online')
-            ON DUPLICATE KEY UPDATE last_heartbeat = NOW(), status = 'online'
-        ");
-        return $stmt->execute([$spotId]);
-    }
-
-    // ─── NON-CRUD: Owner Monthly PDF Report Data ──────────────
-
-    /**
-     * Generates monthly report data for owner's business dashboard.
-     */
     public function getOwnerMonthlyReport(int $ownerId, int $month, int $year): array {
+        $data = [];
+
         $stmt = $this->db->prepare("
-            SELECT 
-                COUNT(r.reservation_id) AS total_reservations,
-                SUM(t.owner_earnings) AS total_earnings,
-                SUM(t.platform_fee) AS platform_fees,
-                AVG(r.total_amount) AS avg_booking_value,
-                COUNT(CASE WHEN r.status = 'no_show' THEN 1 END) AS no_shows,
-                COUNT(CASE WHEN r.status = 'cancelled' THEN 1 END) AS cancellations
+            SELECT COUNT(*) 
+            FROM reservations r
+            JOIN parking_spots s ON r.spot_id = s.spot_id
+            WHERE s.owner_id = ? AND MONTH(r.start_time) = ? AND YEAR(r.start_time) = ? AND r.status = 'completed'
+        ");
+        $stmt->execute([$ownerId, $month, $year]);
+        $data['total_reservations'] = (int)$stmt->fetchColumn();
+
+        $stmt = $this->db->prepare("
+            SELECT COALESCE(SUM(t.owner_earnings), 0)
+            FROM transactions t
+            JOIN reservations r ON t.reservation_id = r.reservation_id
+            JOIN parking_spots s ON r.spot_id = s.spot_id
+            WHERE s.owner_id = ? AND MONTH(r.start_time) = ? AND YEAR(r.start_time) = ? AND t.payment_status = 'released_to_owner'
+        ");
+        $stmt->execute([$ownerId, $month, $year]);
+        $data['total_earnings'] = (float)$stmt->fetchColumn();
+
+        $data['avg_booking_value'] = $data['total_reservations'] > 0
+            ? round($data['total_earnings'] / $data['total_reservations'], 2)
+            : 0;
+
+        $stmt = $this->db->prepare("
+            SELECT COUNT(*) 
+            FROM reservations r
+            JOIN parking_spots s ON r.spot_id = s.spot_id
+            WHERE s.owner_id = ? AND MONTH(r.start_time) = ? AND YEAR(r.start_time) = ? AND r.status = 'no_show'
+        ");
+        $stmt->execute([$ownerId, $month, $year]);
+        $data['no_shows'] = (int)$stmt->fetchColumn();
+
+        $stmt = $this->db->prepare("
+            SELECT COUNT(*) 
+            FROM reservations r
+            JOIN parking_spots s ON r.spot_id = s.spot_id
+            WHERE s.owner_id = ? AND MONTH(r.start_time) = ? AND YEAR(r.start_time) = ? AND r.status = 'cancelled'
+        ");
+        $stmt->execute([$ownerId, $month, $year]);
+        $data['cancellations'] = (int)$stmt->fetchColumn();
+
+        // استعلام أداء المواقف مع trust_score
+        $stmt = $this->db->prepare("
+            SELECT s.title, COUNT(r.reservation_id) AS bookings, ROUND(s.trust_score, 1) AS trust_score
             FROM parking_spots s
-            LEFT JOIN reservations r ON s.spot_id = r.spot_id
-                AND MONTH(r.created_at) = ? AND YEAR(r.created_at) = ?
-            LEFT JOIN transactions t ON r.reservation_id = t.reservation_id
+            LEFT JOIN reservations r ON s.spot_id = r.spot_id AND MONTH(r.start_time) = ? AND YEAR(r.start_time) = ? AND r.status = 'completed'
             WHERE s.owner_id = ?
+            GROUP BY s.spot_id
+            ORDER BY bookings DESC
         ");
         $stmt->execute([$month, $year, $ownerId]);
-        $summary = $stmt->fetch();
+        $data['spots'] = $stmt->fetchAll();
 
-        // Best time slots
         $stmt = $this->db->prepare("
             SELECT HOUR(r.start_time) AS hour, COUNT(*) AS count
             FROM reservations r
             JOIN parking_spots s ON r.spot_id = s.spot_id
-            WHERE s.owner_id = ?
-              AND MONTH(r.created_at) = ? AND YEAR(r.created_at) = ?
-              AND r.status = 'completed'
+            WHERE s.owner_id = ? AND MONTH(r.start_time) = ? AND YEAR(r.start_time) = ? AND r.status = 'completed'
             GROUP BY HOUR(r.start_time)
             ORDER BY count DESC
-            LIMIT 5
         ");
         $stmt->execute([$ownerId, $month, $year]);
-        $summary['top_hours'] = $stmt->fetchAll();
+        $data['top_hours'] = $stmt->fetchAll();
 
-        // Occupancy rate per spot
-        $stmt = $this->db->prepare("
-            SELECT s.spot_id, s.title,
-                   COUNT(r.reservation_id) AS bookings,
-                   s.trust_score
-            FROM parking_spots s
-            LEFT JOIN reservations r ON s.spot_id = r.spot_id AND r.status = 'completed'
-                AND MONTH(r.created_at) = ? AND YEAR(r.created_at) = ?
-            WHERE s.owner_id = ?
-            GROUP BY s.spot_id, s.title, s.trust_score
-        ");
-        $stmt->execute([$month, $year, $ownerId]);
-        $summary['spots'] = $stmt->fetchAll();
-
-        return $summary;
+        return $data;
     }
 
-    /**
-     * Generates a simple HTML-based PDF report using basic output buffering.
-     * In production: use FPDF or TCPDF library.
-     */
+    public function getRevenueHeatmapData(): array {
+        $stmt = $this->db->query("
+            SELECT s.city_zone, 
+                   COALESCE(SUM(t.amount), 0) AS total_revenue,
+                   COUNT(DISTINCT s.spot_id) AS spot_count
+            FROM parking_spots s
+            LEFT JOIN reservations r ON r.spot_id = s.spot_id
+            LEFT JOIN transactions t ON t.reservation_id = r.reservation_id AND t.payment_status = 'released_to_owner'
+            WHERE s.city_zone IS NOT NULL AND s.city_zone != ''
+            GROUP BY s.city_zone
+            ORDER BY total_revenue DESC
+        ");
+        return $stmt->fetchAll();
+    }
+
     public function generateOwnerPDF(int $ownerId, int $month, int $year): string {
         $data = $this->getOwnerMonthlyReport($ownerId, $month, $year);
+        $monthName = date('F', mktime(0,0,0,$month,1,$year));
 
-        // Get owner info
-        $stmt = $this->db->prepare("SELECT full_name, email FROM users WHERE user_id = ?");
-        $stmt->execute([$ownerId]);
-        $owner = $stmt->fetch();
+        $html = "<html><head><meta charset='UTF-8'><title>Report $monthName $year</title>";
+        $html .= "<style>body{font-family:sans-serif} table{border-collapse:collapse;width:100%} th,td{border:1px solid #ddd;padding:8px} th{background:#480959;color:#fff}</style></head><body>";
+        $html .= "<h1>Monthly Report - $monthName $year</h1>";
 
-        $monthName  = date('F', mktime(0, 0, 0, $month, 1, $year));
-        $reportFile = __DIR__ . "/../reports/owner_{$ownerId}_{$year}_{$month}.html";
+        $html .= "<h2>Summary</h2><table>";
+        $html .= "<tr><td>Total Bookings</td><td>{$data['total_reservations']}</td></tr>";
+        $html .= "<tr><td>Net Earnings</td><td>" . number_format($data['total_earnings'], 2) . " EGP</td></tr>";
+        $html .= "<tr><td>Avg Booking Value</td><td>" . number_format($data['avg_booking_value'], 2) . " EGP</td></tr>";
+        $html .= "<tr><td>No-Shows</td><td>{$data['no_shows']}</td></tr>";
+        $html .= "<tr><td>Cancellations</td><td>{$data['cancellations']}</td></tr>";
+        $html .= "</table>";
 
-        $html = "<!DOCTYPE html><html><head>
-        <meta charset='utf-8'>
-        <title>Monthly Report - {$monthName} {$year}</title>
-        <style>
-            body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
-            h1 { color: #1a73e8; } 
-            .summary { display: flex; gap: 20px; margin: 20px 0; }
-            .card { background: #f5f5f5; padding: 15px; border-radius: 8px; min-width: 150px; text-align: center; }
-            .card h2 { margin: 0; font-size: 28px; color: #1a73e8; }
-            .card p { margin: 5px 0 0; font-size: 14px; }
-            table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-            th { background: #1a73e8; color: white; padding: 10px; text-align: left; }
-            td { padding: 8px 10px; border-bottom: 1px solid #ddd; }
-            tr:nth-child(even) { background: #f9f9f9; }
-        </style></head><body>
-        <h1>🅿️ Rakna - Monthly Earnings Report</h1>
-        <p><strong>Owner:</strong> {$owner['full_name']} ({$owner['email']})</p>
-        <p><strong>Period:</strong> {$monthName} {$year}</p>
-        <hr>
-        <div class='summary'>
-            <div class='card'><h2>{$data['total_reservations']}</h2><p>Total Bookings</p></div>
-            <div class='card'><h2>" . number_format((float)$data['total_earnings'], 2) . " EGP</h2><p>Net Earnings</p></div>
-            <div class='card'><h2>" . number_format((float)$data['avg_booking_value'], 2) . " EGP</h2><p>Avg Booking Value</p></div>
-            <div class='card'><h2>{$data['no_shows']}</h2><p>No-Shows</p></div>
-            <div class='card'><h2>{$data['cancellations']}</h2><p>Cancellations</p></div>
-        </div>
-        <h2>Spot Performance</h2>
-        <table>
-            <tr><th>Spot</th><th>Bookings</th><th>Trust Score</th></tr>";
-
+        $html .= "<h2>Spot Performance</h2><table><tr><th>Spot</th><th>Bookings</th><th>Trust</th></tr>";
         foreach ($data['spots'] as $spot) {
-            $html .= "<tr><td>{$spot['title']}</td><td>{$spot['bookings']}</td><td>{$spot['trust_score']}/5</td></tr>";
+            $html .= "<tr><td>{$spot['title']}</td><td>{$spot['bookings']}</td><td>" . number_format($spot['trust_score'] ?? 0, 1) . " ★</td></tr>";
         }
-        $html .= "</table>
-        <h2>Top Booking Hours</h2><table>
-        <tr><th>Hour</th><th>Bookings</th></tr>";
-        foreach ($data['top_hours'] as $h) {
-            $html .= "<tr><td>{$h['hour']}:00</td><td>{$h['count']}</td></tr>";
-        }
-        $html .= "</table><br><p style='color:#999;font-size:12px;'>Generated on " . date('Y-m-d H:i') . " | Rakna Parking System</p></body></html>";
+        $html .= "</table>";
 
-        file_put_contents($reportFile, $html);
-        return $reportFile;
-    }
+        $html .= "</body></html>";
 
-    // ─── NON-CRUD: System-wide Analytics ─────────────────────
-
-    public function getSystemStats(): array {
-        $queries = [
-            'total_users'        => "SELECT COUNT(*) FROM users WHERE is_active = 1",
-            'total_spots'        => "SELECT COUNT(*) FROM parking_spots WHERE is_verified = 1",
-            'total_reservations' => "SELECT COUNT(*) FROM reservations",
-            'active_now'         => "SELECT COUNT(*) FROM reservations WHERE status = 'active'",
-            'total_revenue'      => "SELECT SUM(amount) FROM transactions WHERE payment_status = 'released'",
-            'pending_verif'      => "SELECT COUNT(*) FROM owner_verifications WHERE status = 'pending'",
-            'open_appeals'       => "SELECT COUNT(*) FROM fine_appeals WHERE status = 'pending'",
-            'blacklisted_users'  => "SELECT COUNT(*) FROM users WHERE is_blacklisted = 1",
-        ];
-        $stats = [];
-        foreach ($queries as $key => $sql) {
-            $stmt = $this->db->query($sql);
-            $stats[$key] = $stmt->fetchColumn() ?? 0;
-        }
-        return $stats;
+        $filePath = __DIR__ . "/../reports/report_{$ownerId}_{$month}_{$year}.html";
+        file_put_contents($filePath, $html);
+        return $filePath;
     }
 }

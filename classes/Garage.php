@@ -13,15 +13,13 @@ class Garage {
 
     public function createGarage(array $data): array {
         $stmt = $this->db->prepare("
-            INSERT INTO garages (owner_id, name, address, latitude, longitude, city_zone, total_floors, description, is_verified)
-            VALUES (?,?,?,?,?,?,?,?,1)
+            INSERT INTO garages (owner_id, name, address, city_zone, total_floors, description, is_verified)
+            VALUES (?,?,?,?,?,?,0)
         ");
         $stmt->execute([
             $data['owner_id'],
             trim($data['name']),
             trim($data['address']),
-            $data['latitude']     ?? null,
-            $data['longitude']    ?? null,
             $data['city_zone']    ?? null,
             $data['total_floors'] ?? 1,
             $data['description']  ?? '',
@@ -34,10 +32,10 @@ class Garage {
         $stmt = $this->db->prepare("
             SELECT g.*, u.full_name AS owner_name,
                    COUNT(s.spot_id) AS total_spots,
-                   SUM(s.status = 'available') AS available_spots
+                   SUM(s.status = 'available' AND s.is_verified = 1) AS available_spots
             FROM garages g
             JOIN users u ON g.owner_id = u.user_id
-            LEFT JOIN parking_spots s ON s.garage_id = g.garage_id
+            LEFT JOIN parking_spots s ON s.garage_id = g.garage_id AND s.is_verified = 1
             WHERE g.garage_id = ?
             GROUP BY g.garage_id
         ");
@@ -49,10 +47,10 @@ class Garage {
         $stmt = $this->db->prepare("
             SELECT g.*,
                    COUNT(s.spot_id) AS total_spots,
-                   SUM(s.status = 'available') AS available_spots,
+                   SUM(s.status = 'available' AND s.is_verified = 1) AS available_spots,
                    SUM(s.status = 'unavailable') AS unavailable_spots
             FROM garages g
-            LEFT JOIN parking_spots s ON s.garage_id = g.garage_id
+            LEFT JOIN parking_spots s ON s.garage_id = g.garage_id AND s.is_verified = 1
             WHERE g.owner_id = ?
             GROUP BY g.garage_id
             ORDER BY g.created_at DESC
@@ -62,7 +60,6 @@ class Garage {
     }
 
     public function deleteGarage(int $garageId, int $ownerId): array {
-        // Check active reservations
         $stmt = $this->db->prepare("
             SELECT COUNT(*) FROM reservations r
             JOIN parking_spots s ON r.spot_id = s.spot_id
@@ -77,13 +74,21 @@ class Garage {
         return ['success' => true];
     }
 
-    // ─── NON-CRUD: Auto-generate Numbered Spots ───────────────
+    public function approveGarage(int $garageId): bool {
+        $this->db->beginTransaction();
+        try {
+            $stmt = $this->db->prepare("UPDATE garages SET is_verified = 1 WHERE garage_id = ?");
+            $stmt->execute([$garageId]);
+            $stmt = $this->db->prepare("UPDATE parking_spots SET is_verified = 1 WHERE garage_id = ?");
+            $stmt->execute([$garageId]);
+            $this->db->commit();
+            return true;
+        } catch (Exception $e) {
+            $this->db->rollBack();
+            return false;
+        }
+    }
 
-    /**
-     * Auto-generates numbered spots inside a garage.
-     * Format: A1, A2... B1, B2... based on rows & cols.
-     * e.g. rows=2, cols=5 → A1-A5, B1-B5 = 10 spots
-     */
     public function generateSpots(int $garageId, array $config): array {
         $garage = $this->getGarageById($garageId);
         if (!$garage) return ['success' => false, 'message' => 'Garage not found.'];
@@ -92,8 +97,6 @@ class Garage {
         $cols       = (int)($config['cols']           ?? 10);
         $pricePerHr = (float)($config['price_per_hour'] ?? 20);
         $hasEV      = (int)($config['has_ev_charger']  ?? 0);
-        $maxH       = $config['max_height_cm']          ?? null;
-        $maxW       = $config['max_width_cm']           ?? null;
         $prefix     = strtoupper($config['prefix']      ?? '');
 
         $created = 0;
@@ -104,15 +107,15 @@ class Garage {
             for ($r = 0; $r < $rows; $r++) {
                 $rowLetter = $prefix . $letters[$r];
                 for ($c = 1; $c <= $cols; $c++) {
-                    $spotNumber = $rowLetter . $c; // e.g. A1, A2, B3
+                    $spotNumber = $rowLetter . $c;
                     $title      = $garage['name'] . ' — Spot ' . $spotNumber;
 
                     $stmt = $this->db->prepare("
                         INSERT INTO parking_spots
-                        (owner_id, garage_id, spot_number, title, address, latitude, longitude,
+                        (owner_id, garage_id, spot_number, title, address,
                          spot_type, status, price_per_hour, base_price,
-                         max_height_cm, max_width_cm, has_ev_charger, city_zone)
-                        VALUES (?,?,?,?,?,?,?,'garage','available',?,?,?,?,?,?)
+                         has_ev_charger, city_zone, is_verified)
+                        VALUES (?,?,?,?,?,'garage','available',?,?,?,?,0)
                     ");
                     $stmt->execute([
                         $garage['owner_id'],
@@ -120,12 +123,8 @@ class Garage {
                         $spotNumber,
                         $title,
                         $garage['address'],
-                        $garage['latitude'],
-                        $garage['longitude'],
                         $pricePerHr,
                         $pricePerHr,
-                        $maxH,
-                        $maxW,
                         $hasEV,
                         $garage['city_zone'],
                     ]);
@@ -140,12 +139,6 @@ class Garage {
         }
     }
 
-    // ─── NON-CRUD: Get Garage Spots Grid ─────────────────────
-
-    /**
-     * Returns spots as a 2D grid grouped by row letter.
-     * Used to display the visual parking map.
-     */
     public function getSpotsGrid(int $garageId): array {
         $stmt = $this->db->prepare("
             SELECT s.*,
@@ -165,16 +158,13 @@ class Garage {
         $stmt->execute([$garageId]);
         $spots = $stmt->fetchAll();
 
-        // Group by row letter
         $grid = [];
         foreach ($spots as $spot) {
-            $row = preg_replace('/[0-9]/', '', $spot['spot_number']); // A, B, C...
+            $row = preg_replace('/[0-9]/', '', $spot['spot_number']);
             $grid[$row][] = $spot;
         }
         return $grid;
     }
-
-    // ─── NON-CRUD: Garage Occupancy Stats ────────────────────
 
     public function getGarageOccupancy(int $garageId): array {
         $stmt = $this->db->prepare("
@@ -187,7 +177,7 @@ class Garage {
                       AND NOW() BETWEEN r.start_time AND r.end_time
                 ) THEN 1 ELSE 0 END) AS occupied_now,
                 SUM(s.status = 'maintenance') AS maintenance,
-                SUM(s.status = 'available') AS available
+                SUM(s.status = 'available' AND s.is_verified = 1) AS available
             FROM parking_spots s
             WHERE s.garage_id = ?
         ");
@@ -199,14 +189,7 @@ class Garage {
         return $stats;
     }
 
-    // ─── NON-CRUD: Search Garages by Zone ────────────────────
-
-    /**
-     * Search garages grouped by city_zone.
-     * Returns garages with real-time available spots count,
-     * price range, and occupancy status.
-     * Shows ALL garages (even with 0 free spots).
-     */
+    // ─── searchGarages ───────────────────────────────────────
     public function searchGarages(array $filters): array {
         $bufferMinutes = 10;
         $searchStart   = $filters['start_time'] ?? date('Y-m-d H:i:s');
@@ -220,6 +203,7 @@ class Garage {
                    SUM(CASE
                      WHEN s.spot_id IS NOT NULL
                        AND s.status = 'available'
+                       AND s.is_verified = 1
                        AND NOT EXISTS (
                          SELECT 1 FROM reservations r
                          WHERE r.spot_id = s.spot_id
@@ -237,6 +221,7 @@ class Garage {
             JOIN users u ON g.owner_id = u.user_id
             LEFT JOIN parking_spots s ON s.garage_id = g.garage_id
                 AND s.status != 'maintenance'
+                AND s.is_verified = 1
             WHERE g.is_verified = 1
         ";
 
@@ -252,33 +237,15 @@ class Garage {
         if (!empty($filters['needs_ev'])) {
             $sql .= " AND EXISTS (
                 SELECT 1 FROM parking_spots ps
-                WHERE ps.garage_id = g.garage_id AND ps.has_ev_charger = 1
+                WHERE ps.garage_id = g.garage_id AND ps.has_ev_charger = 1 AND ps.is_verified = 1
             )";
         }
         if (!empty($filters['max_price'])) {
             $sql .= " AND EXISTS (
                 SELECT 1 FROM parking_spots ps
-                WHERE ps.garage_id = g.garage_id AND ps.price_per_hour <= ?
+                WHERE ps.garage_id = g.garage_id AND ps.price_per_hour <= ? AND ps.is_verified = 1
             )";
             $params[] = $filters['max_price'];
-        }
-        if (!empty($filters['vehicle_height'])) {
-            $sql .= " AND NOT EXISTS (
-                SELECT 1 FROM parking_spots ps
-                WHERE ps.garage_id = g.garage_id
-                  AND ps.max_height_cm IS NOT NULL
-                  AND ps.max_height_cm < ?
-            )";
-            $params[] = $filters['vehicle_height'];
-        }
-        if (!empty($filters['vehicle_width'])) {
-            $sql .= " AND NOT EXISTS (
-                SELECT 1 FROM parking_spots ps
-                WHERE ps.garage_id = g.garage_id
-                  AND ps.max_width_cm IS NOT NULL
-                  AND ps.max_width_cm < ?
-            )";
-            $params[] = $filters['vehicle_width'];
         }
 
         $sql .= " GROUP BY g.garage_id ORDER BY free_spots DESC, g.city_zone ASC LIMIT 50";
@@ -288,14 +255,7 @@ class Garage {
         return $stmt->fetchAll();
     }
 
-
-    // ─── NON-CRUD: List All Zones ─────────────────────────────
-
-    /**
-     * Returns distinct zones with garage count for filter dropdown.
-     */
     public function listZones(): array {
-        // Show zones even for garages without spots yet
         $stmt = $this->db->query("
             SELECT city_zone, COUNT(*) AS garage_count
             FROM garages
@@ -306,12 +266,6 @@ class Garage {
         return $stmt->fetchAll();
     }
 
-    // ─── NON-CRUD: Get Available Spots in Garage ──────────────
-
-    /**
-     * Returns available (free) spots in a garage for a given time window.
-     * Used when driver selects a garage to pick a specific spot.
-     */
     public function getAvailableSpotsInGarage(int $garageId, string $start, string $end, array $vehicleFilters = []): array {
         $bufferMinutes = 10;
         $sql = "
@@ -329,17 +283,10 @@ class Garage {
             FROM parking_spots s
             WHERE s.garage_id = ?
               AND s.status = 'available'
+              AND s.is_verified = 1
         ";
         $params = [$end, $bufferMinutes, $bufferMinutes, $start, $garageId];
 
-        if (!empty($vehicleFilters['height'])) {
-            $sql .= " AND (s.max_height_cm IS NULL OR s.max_height_cm >= ?)";
-            $params[] = $vehicleFilters['height'];
-        }
-        if (!empty($vehicleFilters['width'])) {
-            $sql .= " AND (s.max_width_cm IS NULL OR s.max_width_cm >= ?)";
-            $params[] = $vehicleFilters['width'];
-        }
         if (!empty($vehicleFilters['needs_ev'])) {
             $sql .= " AND s.has_ev_charger = 1";
         }

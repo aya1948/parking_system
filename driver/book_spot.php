@@ -23,7 +23,6 @@ if (!$spot || !$spotObj->isVisibleInSearch($spotId)) {
 }
 
 $vehicles    = $vehObj->listUserVehicles($user['user_id']);
-$marketRate  = $spotObj->suggestMarketRate($spotId);
 $promoResult = null;
 
 require_once __DIR__ . '/../includes/header.php';
@@ -101,10 +100,6 @@ require_once __DIR__ . '/../includes/header.php';
               <div class="fw-bold text-primary"><?= number_format($spot['price_per_hour'], 2) ?> EGP/hr</div>
             </div>
             <div class="col-6">
-              <small class="text-muted">Market Avg</small>
-              <div class="fw-bold"><?= number_format($marketRate['suggested_price'], 2) ?> EGP/hr</div>
-            </div>
-            <div class="col-6">
               <small class="text-muted">Type</small>
               <div class="fw-bold"><?= ucfirst($spot['spot_type']) ?></div>
             </div>
@@ -112,16 +107,6 @@ require_once __DIR__ . '/../includes/header.php';
               <small class="text-muted">EV Charger</small>
               <div class="fw-bold"><?= $spot['has_ev_charger'] ? '<span class="text-success">Yes</span>' : 'No' ?></div>
             </div>
-            <?php if ($spot['max_height_cm']): ?>
-            <div class="col-6">
-              <small class="text-muted">Max Height</small>
-              <div class="fw-bold"><?= $spot['max_height_cm'] ?> cm</div>
-            </div>
-            <?php endif; ?>
-          </div>
-          <div class="d-flex align-items-center gap-2 mb-2">
-            <span class="text-warning"><?= str_repeat('★', round($spot['trust_score'])) ?><?= str_repeat('☆', 5 - round($spot['trust_score'])) ?></span>
-            <small class="text-muted"><?= number_format($spot['trust_score'], 1) ?>/5 (<?= $spot['total_reviews'] ?> reviews)</small>
           </div>
           <p class="small text-muted"><?= nl2br(htmlspecialchars($spot['description'])) ?></p>
         </div>

@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         setFlash('success', 'Spot deleted.');
     }
 
-    header("Location: $b/index.php?action=manage_spots");
+    header("Location: $b/index.php?action=admin_manage_spots");
     exit;
 }
 
@@ -148,7 +148,7 @@ require_once __DIR__ . '/../includes/header.php';
   <div class="card mb-4">
     <div class="card-body">
       <form method="GET" class="row g-3">
-        <input type="hidden" name="action" value="manage_spots">
+        <input type="hidden" name="action" value="admin_manage_spots">
         <div class="col-md-3">
           <input type="text" name="q" class="form-control" placeholder="Search title or address..."
                  value="<?= htmlspecialchars($search) ?>">
@@ -176,7 +176,7 @@ require_once __DIR__ . '/../includes/header.php';
           <button type="submit" class="btn btn-primary w-100">Filter</button>
         </div>
         <div class="col-md-1">
-          <a href="<?= $b ?>/index.php?action=manage_spots" class="btn btn-outline-secondary w-100">Clear</a>
+          <a href="<?= $b ?>/index.php?action=admin_manage_spots" class="btn btn-outline-secondary w-100">Clear</a>
         </div>
       </form>
     </div>
@@ -196,7 +196,6 @@ require_once __DIR__ . '/../includes/header.php';
             <th>Owner</th>
             <th>Price/hr</th>
             <th>Bookings</th>
-            <th>Trust</th>
             <th>Status</th>
             <th>Verified</th>
             <th>Actions</th>
@@ -219,10 +218,6 @@ require_once __DIR__ . '/../includes/header.php';
             </td>
             <td class="text-primary fw-bold"><?= number_format($s['price_per_hour'],2) ?> EGP</td>
             <td class="text-center"><?= $s['total_bookings'] ?></td>
-            <td>
-              <span class="text-warning"><?= number_format($s['trust_score'],1) ?><i class="bi bi-star-fill ms-1"></i></span>
-              <br><small class="text-muted"><?= $s['total_reviews'] ?> reviews</small>
-            </td>
             <td>
               <?php
               $bc = [
@@ -280,7 +275,7 @@ require_once __DIR__ . '/../includes/header.php';
           </tr>
           <?php endforeach; ?>
           <?php if (empty($spots)): ?>
-          <tr><td colspan="9" class="text-center text-muted py-5">No spots found.</td></tr>
+          <tr><td colspan="8" class="text-center text-muted py-5">No spots found.</td></tr>
           <?php endif; ?>
         </tbody>
       </table>
@@ -292,7 +287,7 @@ require_once __DIR__ . '/../includes/header.php';
 <!-- STATUS MODAL -->
 <div class="modal fade" id="statusModal" tabindex="-1">
   <div class="modal-dialog">
-    <form method="POST" class="modal-content">
+    <form method="POST" action="<?= $b ?>/index.php?action=admin_manage_spots" class="modal-content">
       <div class="modal-header"><h5 class="modal-title">Change Spot Status</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
       <div class="modal-body">
@@ -300,10 +295,10 @@ require_once __DIR__ . '/../includes/header.php';
         <input type="hidden" name="spot_id"  id="statusSpotId">
         <label class="form-label">New Status</label>
         <select name="status" class="form-select">
-          <option value="available"><i class="bi bi-check-circle me-1"></i> Available</option>
-          <option value="unavailable"><i class="bi bi-lock me-1"></i> Unavailable</option>
-          <option value="maintenance"><i class="bi bi-tools me-1"></i> Maintenance</option>
-          <option value="owner_use"><i class="bi bi-house-door me-1"></i> Owner Use</option>
+          <option value="available">Available</option>
+          <option value="unavailable">Unavailable</option>
+          <option value="maintenance">Maintenance</option>
+          <option value="owner_use">Owner Use</option>
         </select>
       </div>
       <div class="modal-footer">
@@ -317,7 +312,7 @@ require_once __DIR__ . '/../includes/header.php';
 <!-- EMERGENCY MODAL -->
 <div class="modal fade" id="emergencyModal" tabindex="-1">
   <div class="modal-dialog">
-    <form method="POST" class="modal-content">
+    <form method="POST" action="<?= $b ?>/index.php?action=admin_manage_spots" class="modal-content">
       <div class="modal-header" style="background:#480959; color:#fff;">
         <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-1"></i> Emergency Override</h5>
         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>

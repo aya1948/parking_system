@@ -105,19 +105,26 @@ class Notification {
 
     /**
      * Notifies all waitlisted drivers when a spot becomes free.
+     * يدعم أيضًا من يشاهدون الجراج بأكمله (spot_id = NULL).
      */
     public function notifyWaitlist(int $spotId, string $freedStart, string $freedEnd): int {
+        // جلب garage_id الخاص بالموقف
+        $stmt = $this->db->prepare("SELECT garage_id FROM parking_spots WHERE spot_id = ?");
+        $stmt->execute([$spotId]);
+        $garageId = $stmt->fetchColumn();
+
         $stmt = $this->db->prepare("
             SELECT w.*, u.full_name, u.email
             FROM waitlist w
             JOIN users u ON w.driver_id = u.user_id
-            WHERE w.spot_id = ?
-              AND w.status = 'watching'
-              AND w.desired_start >= ?
-              AND w.desired_end   <= ?
+            WHERE w.status = 'watching'
+              AND (
+                (w.spot_id = ? AND w.desired_start >= ? AND w.desired_end <= ?)
+                OR (w.spot_id IS NULL AND w.garage_id = ?)
+              )
             ORDER BY w.added_at ASC
         ");
-        $stmt->execute([$spotId, $freedStart, $freedEnd]);
+        $stmt->execute([$spotId, $freedStart, $freedEnd, $garageId]);
         $waiting = $stmt->fetchAll();
 
         $notified = 0;
@@ -134,15 +141,31 @@ class Notification {
         return $notified;
     }
 
-    public function addToWaitlist(int $spotId, int $driverId, int $vehicleId, string $desiredStart, string $desiredEnd): array {
-        // Check not already watching
-        $stmt = $this->db->prepare("SELECT COUNT(*) FROM waitlist WHERE spot_id = ? AND driver_id = ? AND status = 'watching'");
-        $stmt->execute([$spotId, $driverId]);
-        if ((int)$stmt->fetchColumn() > 0) {
-            return ['success' => false, 'message' => 'Already watching this spot.'];
+    /**
+     * إضافة سائق إلى قائمة الانتظار.
+     * يدعم مشاهدة موقف محدد (spot_id) أو جراج كامل (spot_id=NULL مع garage_id).
+     */
+    public function addToWaitlist(int $spotId, int $driverId, int $vehicleId, string $desiredStart, string $desiredEnd, int $garageId = 0): array {
+        // تحويل spotId=0 إلى NULL لتجنب مشكلة المفتاح الخارجي
+        $resolvedSpotId = $spotId === 0 ? null : $spotId;
+
+        // التحقق من عدم وجود مراقبة مسبقة
+        if ($resolvedSpotId === null && $garageId > 0) {
+            $stmt = $this->db->prepare("SELECT COUNT(*) FROM waitlist WHERE driver_id = ? AND garage_id = ? AND status = 'watching' AND spot_id IS NULL");
+            $stmt->execute([$driverId, $garageId]);
+        } else {
+            $stmt = $this->db->prepare("SELECT COUNT(*) FROM waitlist WHERE spot_id = ? AND driver_id = ? AND status = 'watching'");
+            $stmt->execute([$resolvedSpotId, $driverId]);
         }
-        $stmt = $this->db->prepare("INSERT INTO waitlist (spot_id, driver_id, vehicle_id, desired_start, desired_end) VALUES (?,?,?,?,?)");
-        $stmt->execute([$spotId, $driverId, $vehicleId, $desiredStart, $desiredEnd]);
+
+        if ((int)$stmt->fetchColumn() > 0) {
+            return ['success' => false, 'message' => 'Already watching this spot/garage.'];
+        }
+
+        // إدراج السجل: إذا كان NULL (جراج) نرسل NULL، وإلا نرسل معرف الموقف
+        $stmt = $this->db->prepare("INSERT INTO waitlist (spot_id, driver_id, vehicle_id, desired_start, desired_end, garage_id) VALUES (?,?,?,?,?,?)");
+        $stmt->execute([$resolvedSpotId, $driverId, $vehicleId, $desiredStart, $desiredEnd, $garageId > 0 ? $garageId : null]);
+
         return ['success' => true, 'waitlist_id' => $this->db->lastInsertId()];
     }
 
@@ -164,8 +187,6 @@ class Notification {
     }
 
     private function simulateSendEmail(int $userId, string $subject, string $body): void {
-        // In production: use PHPMailer or similar
-        // Simulation: log to audit
         $stmt = $this->db->prepare("INSERT INTO audit_log (user_id, action, target_table, new_value) VALUES (?,?,?,?)");
         $stmt->execute([$userId, 'EMAIL_SENT', 'notifications', json_encode(['subject' => $subject])]);
     }
@@ -189,7 +210,7 @@ class Notification {
             return ['success' => false, 'message' => 'Unauthorized to message in this reservation.'];
         }
 
-        // Simulate encryption: store as base64 (real: use libsodium)
+        // Simulate encryption
         $encrypted = base64_encode($text);
         $stmt = $this->db->prepare("INSERT INTO messages (reservation_id, sender_id, receiver_id, message_text) VALUES (?,?,?,?)");
         $stmt->execute([$reservationId, $senderId, $receiverId, $encrypted]);
@@ -209,7 +230,6 @@ class Notification {
         $stmt->execute([$reservationId, $userId, $userId]);
         $messages = $stmt->fetchAll();
 
-        // Decrypt messages
         foreach ($messages as &$msg) {
             $msg['message_text'] = base64_decode($msg['message_text']);
         }

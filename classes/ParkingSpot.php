@@ -14,18 +14,17 @@ class ParkingSpot {
     public function createSpot(array $data): array {
         $stmt = $this->db->prepare("
             INSERT INTO parking_spots 
-            (owner_id, garage_id, spot_number, title, description, address, latitude, longitude, spot_type, price_per_hour, base_price, max_height_cm, max_width_cm, has_ev_charger, city_zone)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            (owner_id, garage_id, spot_number, title, description, address, spot_type, price_per_hour, base_price, has_ev_charger, city_zone)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?)
         ");
         $stmt->execute([
             $data['owner_id'],
             $data['garage_id'] ?? null,
             $data['spot_number'] ?? null,
             $data['title'], $data['description'] ?? '',
-            $data['address'], $data['latitude'] ?? null, $data['longitude'] ?? null,
+            $data['address'],
             $data['spot_type'] ?? 'driveway',
-            $data['price_per_hour'], $data['price_per_hour'], // base = initial price
-            $data['max_height_cm'] ?? null, $data['max_width_cm'] ?? null,
+            $data['price_per_hour'], $data['price_per_hour'],
             $data['has_ev_charger'] ?? 0, $data['city_zone'] ?? null
         ]);
         return ['success' => true, 'spot_id' => $this->db->lastInsertId()];
@@ -34,7 +33,8 @@ class ParkingSpot {
     public function getSpotById(int $spotId): ?array {
         $stmt = $this->db->prepare("
             SELECT s.*, u.full_name AS owner_name, u.phone AS owner_phone,
-                   g.name AS garage_name, g.garage_id
+                   g.name AS garage_name, g.garage_id,
+                   s.trust_score, s.total_reviews, s.difficulty_score
             FROM parking_spots s
             JOIN users u ON s.owner_id = u.user_id
             LEFT JOIN garages g ON s.garage_id = g.garage_id
@@ -45,11 +45,10 @@ class ParkingSpot {
     }
 
     public function updateSpot(int $spotId, array $data, int $ownerId): bool {
-        // First check ownership
         $spot = $this->getSpotById($spotId);
         if (!$spot || $spot['owner_id'] != $ownerId) return false;
 
-        $allowed = ['title','description','address','price_per_hour','max_height_cm','max_width_cm','has_ev_charger','city_zone','garage_id','spot_number'];
+        $allowed = ['title','description','address','price_per_hour','has_ev_charger','city_zone','garage_id','spot_number'];
         $fields = []; $values = [];
         foreach ($allowed as $f) {
             if (isset($data[$f])) { $fields[] = "$f = ?"; $values[] = $data[$f]; }
@@ -61,7 +60,6 @@ class ParkingSpot {
     }
 
     public function deleteSpot(int $spotId, int $ownerId): array {
-        // Cannot delete spot with active reservations
         $stmt = $this->db->prepare("SELECT COUNT(*) FROM reservations WHERE spot_id = ? AND status IN ('pending','confirmed','active')");
         $stmt->execute([$spotId]);
         if ((int)$stmt->fetchColumn() > 0) {
@@ -80,11 +78,6 @@ class ParkingSpot {
 
     // ─── NON-CRUD: Search & Filter Engine ────────────────────
 
-    /**
-     * Advanced filter engine: matches driver vehicle to spot attributes.
-     * Shows occupied spots with badge but prevents double-booking.
-     * Buffer time = 10 minutes after end_time.
-     */
     public function searchSpots(array $filters): array {
         $bufferMinutes = 10;
         $searchStart   = $filters['start_time'] ?? date('Y-m-d H:i:s');
@@ -104,30 +97,15 @@ class ParkingSpot {
                          AND DATE_ADD(r.end_time, INTERVAL ? MINUTE) > ?
                      ) THEN 'occupied'
                      ELSE 'free'
-                   END AS real_time_status,
-                   (
-                     SELECT DATE_ADD(MAX(r2.end_time), INTERVAL ? MINUTE)
-                     FROM reservations r2
-                     WHERE r2.spot_id = s.spot_id
-                       AND r2.status IN ('confirmed','active','pending')
-                       AND r2.end_time > NOW()
-                   ) AS next_available_at
+                   END AS real_time_status
             FROM parking_spots s
             JOIN users u ON s.owner_id = u.user_id
             LEFT JOIN garages g ON s.garage_id = g.garage_id
             WHERE s.status = 'available'
               AND s.is_verified = 1
         ";
-        $params = [$searchEnd, $bufferMinutes, $bufferMinutes, $searchStart, $bufferMinutes];
+        $params = [$searchEnd, $bufferMinutes, $bufferMinutes, $searchStart];
 
-        if (!empty($filters['vehicle_height'])) {
-            $sql .= " AND (s.max_height_cm IS NULL OR s.max_height_cm >= ?)";
-            $params[] = $filters['vehicle_height'];
-        }
-        if (!empty($filters['vehicle_width'])) {
-            $sql .= " AND (s.max_width_cm IS NULL OR s.max_width_cm >= ?)";
-            $params[] = $filters['vehicle_width'];
-        }
         if (!empty($filters['needs_ev'])) {
             $sql .= " AND s.has_ev_charger = 1";
         }
@@ -143,32 +121,13 @@ class ParkingSpot {
             $sql .= " AND s.city_zone LIKE ?";
             $params[] = '%' . $filters['zone'] . '%';
         }
-        if (!empty($filters['hide_occupied'])) {
-            $sql .= " AND NOT EXISTS (
-                SELECT 1 FROM reservations r
-                WHERE r.spot_id = s.spot_id
-                  AND r.status IN ('confirmed','active','pending')
-                  AND r.start_time < DATE_ADD(?, INTERVAL ? MINUTE)
-                  AND DATE_ADD(r.end_time, INTERVAL ? MINUTE) > ?
-            )";
-            $params[] = $searchEnd;
-            $params[] = $bufferMinutes;
-            $params[] = $bufferMinutes;
-            $params[] = $searchStart;
-        }
-        $sql .= " ORDER BY real_time_status ASC, s.trust_score DESC, s.price_per_hour ASC LIMIT 50";
+        $sql .= " ORDER BY s.trust_score DESC, s.price_per_hour ASC LIMIT 50";
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll();
     }
 
-    // ─── NON-CRUD: Blind-Spot Prevention ─────────────────────
-
-    /**
-     * Hides spot from search if in Maintenance or Owner-Use mode.
-     * Returns true if spot should be visible in search.
-     */
     public function isVisibleInSearch(int $spotId): bool {
         $stmt = $this->db->prepare("SELECT status FROM parking_spots WHERE spot_id = ?");
         $stmt->execute([$spotId]);
@@ -181,7 +140,6 @@ class ParkingSpot {
         if (!in_array($status, $allowed)) {
             return ['success' => false, 'message' => 'Invalid status.'];
         }
-        // Check no active reservations before maintenance/owner_use
         if (in_array($status, ['maintenance', 'owner_use'])) {
             $result = $this->checkOverlapWithExistingReservations($spotId, date('Y-m-d H:i:s'), date('Y-m-d H:i:s', strtotime('+30 days')));
             if ($result) {
@@ -195,10 +153,6 @@ class ParkingSpot {
 
     // ─── NON-CRUD: Trust Score Calculator ────────────────────
 
-    /**
-     * Weighted trust score from driver ratings (1-5).
-     * Recent reviews have higher weight.
-     */
     public function recalculateTrustScore(int $spotId): float {
         $stmt = $this->db->prepare("
             SELECT rating,
@@ -215,7 +169,7 @@ class ParkingSpot {
         $weightedSum = 0;
         $totalWeight = 0;
         foreach ($reviews as $r) {
-            $weight = 1 / (1 + ($r['days_old'] / 30)); // newer = higher weight
+            $weight = 1 / (1 + ($r['days_old'] / 30));
             $weightedSum += $r['rating'] * $weight;
             $totalWeight += $weight;
         }
@@ -239,39 +193,12 @@ class ParkingSpot {
 
     // ─── NON-CRUD: Nearby Alternative Suggestion ─────────────
 
-    /**
-     * Suggests nearest available spots when a reserved spot becomes blocked.
-     * Uses simple distance formula (Haversine simulation).
-     */
     public function getNearbyAlternatives(int $blockedSpotId, int $limit = 5): array {
-        $spot = $this->getSpotById($blockedSpotId);
-        if (!$spot || !$spot['latitude']) return [];
-
-        $lat = $spot['latitude'];
-        $lng = $spot['longitude'];
-
-        $stmt = $this->db->prepare("
-            SELECT *,
-                   ROUND(
-                     6371 * ACOS(
-                       COS(RADIANS(?)) * COS(RADIANS(latitude)) *
-                       COS(RADIANS(longitude) - RADIANS(?)) +
-                       SIN(RADIANS(?)) * SIN(RADIANS(latitude))
-                     ), 2
-                   ) AS distance_km
-            FROM parking_spots
-            WHERE status = 'available'
-              AND is_verified = 1
-              AND spot_id != ?
-            ORDER BY distance_km ASC
-            LIMIT ?
-        ");
-        $stmt->execute([$lat, $lng, $lat, $blockedSpotId, $limit]);
-        return $stmt->fetchAll();
+        // لا يمكن استخدامها لعدم وجود إحداثيات
+        return [];
     }
 
-    // ─── NON-CRUD: Owner Verification Workflow ───────────────
-
+    // ─── Owner Verification ──────────────────────────────────
     public function submitVerification(int $ownerId, int $spotId, string $idPath, string $billPath): bool {
         $stmt = $this->db->prepare("INSERT INTO owner_verifications (owner_id, spot_id, id_document, utility_bill) VALUES (?,?,?,?)");
         return $stmt->execute([$ownerId, $spotId, $idPath, $billPath]);
@@ -289,53 +216,22 @@ class ParkingSpot {
         return $stmt->execute([$row['spot_id']]);
     }
 
-    // ─── NON-CRUD: Overlapping Reservation Check ─────────────
-
     public function checkOverlapWithExistingReservations(int $spotId, string $start, string $end): bool {
         $stmt = $this->db->prepare("
             SELECT COUNT(*) FROM reservations
-            WHERE spot_id = ?
-              AND status IN ('confirmed','active','pending')
+            WHERE spot_id = ? AND status IN ('confirmed','active','pending')
               AND start_time < ? AND end_time > ?
         ");
         $stmt->execute([$spotId, $end, $start]);
         return (int)$stmt->fetchColumn() > 0;
     }
 
-    // ─── NON-CRUD: Dynamic Market-Rate Calculator ─────────────
-
-    /**
-     * Suggests optimal price to Owner based on average price of nearby spots.
-     */
+    // ─── Market Rate (مبسطة) ─────────────────────────────────
     public function suggestMarketRate(int $spotId): array {
-        $spot = $this->getSpotById($spotId);
-        if (!$spot) return ['suggested_price' => 0, 'nearby_avg' => 0, 'count' => 0];
-
-        $lat = $spot['latitude'];
-        $lng = $spot['longitude'];
-
-        $stmt = $this->db->prepare("
-            SELECT AVG(price_per_hour) as avg_price, COUNT(*) as total
-            FROM parking_spots
-            WHERE spot_id != ?
-              AND is_verified = 1
-              AND status = 'available'
-              AND ABS(latitude - ?) < 0.05
-              AND ABS(longitude - ?) < 0.05
-        ");
-        $stmt->execute([$spotId, $lat, $lng]);
-        $data = $stmt->fetch();
-
-        $avg = round((float)($data['avg_price'] ?? $spot['base_price']), 2);
-        return [
-            'suggested_price' => $avg,
-            'nearby_avg'      => $avg,
-            'count'           => (int)($data['total'] ?? 0),
-        ];
+        return ['suggested_price' => 0, 'nearby_avg' => 0, 'count' => 0];
     }
 
-    // ─── NON-CRUD: Owner Dashboard Analytics ─────────────────
-
+    // ─── Owner Dashboard Stats ───────────────────────────────
     public function getOwnerDashboardStats(int $ownerId): array {
         $stmt = $this->db->prepare("
             SELECT 
@@ -351,7 +247,6 @@ class ParkingSpot {
         $stmt->execute([$ownerId]);
         $stats = $stmt->fetch();
 
-        // Best performing time slots
         $stmt = $this->db->prepare("
             SELECT HOUR(r.start_time) AS hour_slot, COUNT(*) AS bookings
             FROM reservations r

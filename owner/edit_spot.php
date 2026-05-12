@@ -56,18 +56,6 @@ require_once __DIR__ . '/../includes/header.php';
                 <span class="input-group-text">/hr</span>
               </div>
             </div>
-            <div class="row g-3 mb-3">
-              <div class="col-6">
-                <label class="form-label">Max Vehicle Height (cm)</label>
-                <input type="number" name="max_height_cm" class="form-control" step="0.1"
-                       value="<?= $spot['max_height_cm'] ?>" placeholder="Leave blank = any">
-              </div>
-              <div class="col-6">
-                <label class="form-label">Max Vehicle Width (cm)</label>
-                <input type="number" name="max_width_cm" class="form-control" step="0.1"
-                       value="<?= $spot['max_width_cm'] ?>" placeholder="Leave blank = any">
-              </div>
-            </div>
             <div class="form-check mb-4">
               <input class="form-check-input" type="checkbox" name="has_ev_charger" id="hasEv"
                      <?= $spot['has_ev_charger'] ? 'checked' : '' ?>>

@@ -22,8 +22,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_step'] ?? '') === '1'
         'owner_id'     => $user['user_id'],
         'name'         => trim($_POST['name']),
         'address'      => trim($_POST['address']),
-        'latitude'     => $_POST['latitude']  !== '' ? $_POST['latitude']  : null,
-        'longitude'    => $_POST['longitude'] !== '' ? $_POST['longitude'] : null,
         'city_zone'    => trim($_POST['city_zone']   ?? ''),
         'total_floors' => max(1, (int)($_POST['total_floors'] ?? 1)),
         'description'  => trim($_POST['description'] ?? ''),
@@ -48,8 +46,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['form_step'] ?? '') === '2'
         'cols'           => max(1, min(50, (int)($_POST['cols'] ?? 10))),
         'price_per_hour' => (float)($_POST['price_per_hour'] ?? 25),
         'has_ev_charger' => isset($_POST['has_ev_charger']) ? 1 : 0,
-        'max_height_cm'  => $_POST['max_height_cm'] !== '' ? $_POST['max_height_cm'] : null,
-        'max_width_cm'   => $_POST['max_width_cm']  !== '' ? $_POST['max_width_cm']  : null,
         'prefix'         => strtoupper(trim($_POST['prefix'] ?? '')),
     ]);
     if ($result['success']) {
@@ -127,20 +123,6 @@ require_once __DIR__ . '/../includes/header.php';
                 <input type="number" name="total_floors" class="form-control"
                        min="1" max="20" value="<?= (int)($_POST['total_floors'] ?? 1) ?>">
               </div>
-              <div class="col-md-4">
-                <label class="form-label">Latitude</label>
-                <input type="number" name="latitude" class="form-control"
-                       step="0.000001" placeholder="29.960278"
-                       value="<?= htmlspecialchars($_POST['latitude'] ?? '') ?>">
-              </div>
-            </div>
-            <div class="row g-3 mb-3">
-              <div class="col-md-4">
-                <label class="form-label">Longitude</label>
-                <input type="number" name="longitude" class="form-control"
-                       step="0.000001" placeholder="31.249528"
-                       value="<?= htmlspecialchars($_POST['longitude'] ?? '') ?>">
-              </div>
             </div>
             <div class="mb-4">
               <label class="form-label fw-semibold">Description</label>
@@ -199,18 +181,6 @@ require_once __DIR__ . '/../includes/header.php';
                 <input type="number" name="price_per_hour" class="form-control"
                        step="0.50" min="1" value="25.00" required>
                 <span class="input-group-text">/hr</span>
-              </div>
-            </div>
-            <div class="row g-3 mb-3">
-              <div class="col-md-6">
-                <label class="form-label">Max Height (cm)</label>
-                <input type="number" name="max_height_cm" class="form-control"
-                       step="1" placeholder="blank = no limit">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Max Width (cm)</label>
-                <input type="number" name="max_width_cm" class="form-control"
-                       step="1" placeholder="blank = no limit">
               </div>
             </div>
             <div class="form-check mb-4">

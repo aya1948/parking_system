@@ -80,7 +80,6 @@ $role = $user['role'];
     <li><a class="nav-link" href="/parking_system/index.php?action=manage_fines"><i class="bi bi-file-earmark-x"></i> Fines</a></li>
     <li><a class="nav-link" href="/parking_system/index.php?action=appeals"><i class="bi bi-shield-check"></i> Appeals</a></li>
     <li><a class="nav-link" href="/parking_system/index.php?action=event_zones"><i class="bi bi-bounding-box"></i> Event Zones</a></li>
-    <li><a class="nav-link" href="/parking_system/index.php?action=heatmap"><i class="bi bi-map"></i> Revenue Heatmap</a></li>
     <li><a class="nav-link" href="/parking_system/index.php?action=audit_log"><i class="bi bi-journal-text"></i> Audit Log</a></li>
     <li><a class="nav-link" href="/parking_system/index.php?action=promo_codes"><i class="bi bi-tag"></i> Promo Codes</a></li>
     <li><a class="nav-link" href="/parking_system/index.php?action=peak_rules"><i class="bi bi-clock"></i> Peak Hour Rules</a></li>

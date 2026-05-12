@@ -59,7 +59,7 @@ require_once __DIR__ . '/../includes/header.php';
 }
 /* تأثير hover على صفوف الجدول */
 .table-hover tbody tr:hover {
-    background-color: #f3e5f5; /* لون خلفية موف فاتح عند التمرير */
+    background-color: #f3e5f5;
 }
 /* بطاقات الإحصائيات - حدود يسار */
 .stat-card {
@@ -78,28 +78,22 @@ require_once __DIR__ . '/../includes/header.php';
 
   <!-- STAT CARDS -->
   <div class="row g-3 mb-4">
-    <div class="col-md-3">
+    <div class="col-md-4">
       <div class="card stat-card p-3">
         <p class="text-muted small mb-1">Total Spots</p>
         <h3 class="fw-bold mb-0" style="color: #480959;"><?= $stats['total_spots'] ?></h3>
       </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
       <div class="card stat-card p-3">
         <p class="text-muted small mb-1">Total Bookings</p>
         <h3 class="fw-bold mb-0" style="color: #480959;"><?= $stats['total_bookings'] ?? 0 ?></h3>
       </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
       <div class="card stat-card p-3">
         <p class="text-muted small mb-1">Total Earned</p>
         <h3 class="fw-bold mb-0" style="color: #480959;"><?= number_format($stats['total_earned'] ?? 0, 2) ?> EGP</h3>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card stat-card p-3">
-        <p class="text-muted small mb-1">Avg Trust Score</p>
-        <h3 class="fw-bold mb-0" style="color: #480959;"><?= number_format($stats['avg_trust_score'] ?? 0, 1) ?>/5</h3>
       </div>
     </div>
   </div>
@@ -121,7 +115,7 @@ require_once __DIR__ . '/../includes/header.php';
       <a href="/parking_system/index.php?action=my_spots" class="small text-white">View All Garages</a>
     </div>
     <div class="card-body p-0">
-      <?php if (empty($garages)): // تم التصحيح هنا — استخدمنا $garages بدلاً من $spots ?>
+      <?php if (empty($garages)): ?>
         <div class="p-4 text-center text-muted">
           No garages yet. <a href="/parking_system/index.php?action=add_garage">Add your first garage!</a>
         </div>

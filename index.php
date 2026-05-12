@@ -80,7 +80,6 @@ $routeFiles = [
     'manage_fines'       => 'admin/manage_fines.php',
     'appeals'            => 'admin/appeals.php',
     'event_zones'        => 'admin/event_zones.php',
-    'heatmap'            => 'admin/heatmap.php',
     'audit_log'          => 'admin/audit_log.php',
     'promo_codes'        => 'admin/promo_codes.php',
     'peak_rules'         => 'admin/peak_rules.php',

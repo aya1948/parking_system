@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'preferred_currency' => $_POST['preferred_currency'] ?? 'EGP',
         ]);
         if ($result) {
-            // Refresh session
+            // تحديث بيانات الجلسة
             $updated = $userObj->getUserById($user['user_id']);
             $_SESSION['user'] = array_merge($_SESSION['user'], $updated);
             setFlash('success', 'Profile updated successfully!');
@@ -74,9 +74,6 @@ require_once __DIR__ . '/../includes/header.php';
 }
 .badge.bg-success {
     background-color: #480959 !important;
-}
-.text-warning {
-    color: #480959 !important;
 }
 </style>
 
@@ -136,11 +133,7 @@ require_once __DIR__ . '/../includes/header.php';
             </div>
             <div class="mb-3">
               <label class="form-label">Role</label>
-              <div><span class="badge badge-role-<?= $userData['role'] ?> fs-6"><?= ucfirst($userData['role']) ?></span></div>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Loyalty Points</label>
-              <div class="fw-bold text-warning fs-5"><i class="bi bi-star-fill me-1"></i> <?= $userData['loyalty_points'] ?> pts</div>
+              <div><span class="badge bg-secondary fs-6"><?= ucfirst($userData['role']) ?></span></div>
             </div>
             <button type="submit" class="btn btn-primary w-100">Save Changes</button>
           </form>

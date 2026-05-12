@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action']??'') === 'remove'
 }
 
 $stmt = $db->prepare("
-    SELECT f.*, s.title, s.address, s.price_per_hour, s.trust_score,
+    SELECT f.*, s.title, s.address, s.price_per_hour,
            s.spot_type, s.status, s.has_ev_charger, s.spot_id
     FROM favorites f
     JOIN parking_spots s ON f.spot_id = s.spot_id
@@ -82,9 +82,8 @@ require_once __DIR__ . '/../includes/header.php';
           </div>
           <h6 class="fw-bold"><?= htmlspecialchars($f['title']) ?></h6>
           <p class="small text-muted mb-2"><i class="bi bi-geo-alt me-1"></i><?= htmlspecialchars($f['address']) ?></p>
-          <div class="d-flex justify-content-between mb-3">
+          <div class="mb-3">
             <span class="fw-bold text-primary"><?= number_format($f['price_per_hour'],2) ?> EGP/hr</span>
-            <span class="text-warning"><?= number_format($f['trust_score'],1) ?> <i class="bi bi-star-fill"></i></span>
           </div>
           <div class="d-flex gap-2">
             <a href="<?= $b ?>/index.php?action=book_spot&id=<?= $f['spot_id'] ?>" class="btn btn-primary btn-sm flex-fill">Book Now</a>

@@ -17,6 +17,7 @@ require_once __DIR__ . '/../includes/header.php';
 <style>
 .btn-success { background-color:#480959; border-color:#480959; }
 .btn-success:hover { background-color:#8A2888; }
+.stat-card { border-left: 4px solid #480959; }
 </style>
 <div class="container-fluid px-0"><div class="row g-0">
 <?php require_once __DIR__ . '/../includes/sidebar.php'; ?>
@@ -55,7 +56,7 @@ require_once __DIR__ . '/../includes/header.php';
       ['Cancellations','cancellations','danger','x-circle'],
     ];
     foreach ($cards as [$label, $key, $color, $icon]):
-    $val = is_numeric($data[$key]) ? number_format((float)($data[$key]??0), 2) : ($data[$key]??0);
+    $val = is_numeric($data[$key] ?? 0) ? number_format((float)($data[$key]??0), 2) : ($data[$key]??0);
     ?>
     <div class="col">
       <div class="card stat-card p-3 border-<?= $color ?>">
@@ -84,7 +85,7 @@ require_once __DIR__ . '/../includes/header.php';
               <tr>
                 <td><?= htmlspecialchars($s['title']) ?></td>
                 <td><?= $s['bookings'] ?></td>
-                <td class="text-warning"><?= number_format($s['trust_score'],1) ?>★</td>
+                <td class="text-warning"><?= number_format($s['trust_score'] ?? 0, 1) ?> ★</td>
               </tr>
               <?php endforeach; ?>
               <?php if (empty($data['spots'])): ?><tr><td colspan="3" class="text-muted text-center">No data</td></tr><?php endif; ?>

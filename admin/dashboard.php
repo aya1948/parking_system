@@ -85,7 +85,6 @@ require_once __DIR__ . '/../includes/header.php';
         <?php if ($stats['open_appeals'] > 0): ?><span class="badge bg-danger"><?= $stats['open_appeals'] ?></span><?php endif; ?>
       </a>
       <a href="/parking_system/index.php?action=event_zones" class="btn quick-action-btn btn-sm"><i class="bi bi-bounding-box me-1"></i> Manage Event Zones</a>
-      <a href="/parking_system/index.php?action=heatmap" class="btn quick-action-btn btn-sm"><i class="bi bi-map me-1"></i> Revenue Heatmap</a>
       <a href="/parking_system/index.php?action=audit_log" class="btn quick-action-btn btn-sm"><i class="bi bi-journal-text me-1"></i> Audit Log</a>
     </div>
   </div>
@@ -100,11 +99,10 @@ require_once __DIR__ . '/../includes/header.php';
       ['event_zones',       'bounding-box',    'warning',   'Event Zones',           'Lock city zones for events'],
       ['peak_rules',        'clock-history',   'info',      'Peak Hour Rules',       'Configure pricing multipliers'],
       ['promo_codes',       'tag',             'secondary', 'Promo Codes',           'Manage discount codes'],
-      ['heatmap',           'map',             'primary',   'Revenue Heatmap',       'Zone-level revenue analytics'],
     ];
     foreach ($modules as [$action, $icon, $color, $title, $desc]):
     ?>
-    <div class="col-md-3">
+    <div class="col-md-4">
       <a href="/parking_system/index.php?action=<?= $action ?>" class="text-decoration-none">
         <div class="card h-100 spot-card p-3 text-center">
           <i class="bi bi-<?= $icon ?>" style="font-size:2.5rem;"></i>

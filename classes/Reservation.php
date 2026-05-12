@@ -55,7 +55,6 @@ class Reservation {
         }
 
         // 5. Calculate price
-        $hours        = (strtotime($end) - strtotime($start)) / 3600;
         $pricing      = $this->pricing->calculateTotal($spotId, $start, $end, $driverId, $promoCode, true);
         $totalAmount  = $pricing['total'];
         $discount     = $pricing['discount'];
@@ -75,9 +74,7 @@ class Reservation {
         // 8. Lock payment in escrow
         $this->pricing->lockEscrow($reservationId, $driverId, $totalAmount);
 
-        // 9. Add loyalty points (1 point per EGP spent)
-        $stmt = $this->db->prepare("UPDATE users SET loyalty_points = loyalty_points + ? WHERE user_id = ?");
-        $stmt->execute([(int)$totalAmount, $driverId]);
+        // 9. تم حذف قسم Loyalty Points
 
         return [
             'success'        => true,
@@ -123,15 +120,6 @@ class Reservation {
 
     // ─── NON-CRUD: QR Check-in / Check-out State Machine ─────
 
-    /**
-     * State machine: validates QR code on arrival.
-     * States: confirmed → active → completed
-     * 
-     * Allow check-in:
-     *   - Up to 5 min BEFORE start time
-     *   - Any time AFTER start time (within grace period of 5 min)
-     * No-show: only if > 5 min AFTER start time with no check-in
-     */
     public function qrCheckIn(string $qrCode): array {
         $stmt = $this->db->prepare("SELECT * FROM reservations WHERE qr_code = ?");
         $stmt->execute([$qrCode]);
@@ -155,9 +143,9 @@ class Reservation {
 
         $now         = time();
         $startTime   = strtotime($res['start_time']);
-        $minutesLate = ($now - $startTime) / 60; //양수 = بعد البداية، سالب = قبلها
+        $minutesLate = ($now - $startTime) / 60;
 
-        // Too early: أكتر من 5 دقايق قبل البداية
+        // Too early: more than 5 minutes before start
         if ($now < ($startTime - 5 * 60)) {
             $waitMins = round(($startTime - $now) / 60);
             return [
@@ -166,7 +154,7 @@ class Reservation {
             ];
         }
 
-        // No-show: أكتر من 5 دقايق بعد البداية من غير check-in
+        // No-show: more than GRACE_MINUTES after start
         if ($minutesLate > self::GRACE_MINUTES) {
             $stmt = $this->db->prepare("UPDATE reservations SET status = 'no_show' WHERE reservation_id = ?");
             $stmt->execute([$res['reservation_id']]);
@@ -176,7 +164,7 @@ class Reservation {
             ];
         }
 
-        // ✅ Check-in ناجح — في الوقت أو خلال الـ grace period
+        // Successful check-in
         $stmt = $this->db->prepare("
             UPDATE reservations 
             SET status = 'active', actual_checkin = NOW() 
@@ -185,7 +173,7 @@ class Reservation {
         $stmt->execute([$res['reservation_id']]);
 
         $msg = $minutesLate > 0
-            ? 'Check-in successful! ('. round($minutesLate) .' minute(s) late — within grace period)'
+            ? 'Check-in successful! (' . round($minutesLate) . ' minute(s) late — within grace period)'
             : 'Check-in successful! Welcome.';
 
         return ['success' => true, 'message' => $msg, 'reservation' => $res];
@@ -196,7 +184,6 @@ class Reservation {
         $stmt->execute([$qrCode]);
         $res = $stmt->fetch();
 
-        // Allow checkout for both 'active' AND 'extended' statuses
         if (!$res || !in_array($res['status'], ['active', 'extended'])) {
             return ['success' => false, 'message' => 'No active or extended reservation found for this QR code.'];
         }
@@ -204,7 +191,6 @@ class Reservation {
         $now     = time();
         $endTime = strtotime($res['end_time']);
 
-        // Overstay penalty
         $overstayMinutes = 0;
         $penaltyAmount   = 0;
         if ($now > $endTime) {
@@ -215,10 +201,8 @@ class Reservation {
         $stmt = $this->db->prepare("UPDATE reservations SET status = 'completed', actual_checkout = NOW() WHERE reservation_id = ?");
         $stmt->execute([$res['reservation_id']]);
 
-        // Issue fine if overstayed + send notification
         if ($overstayMinutes > 0) {
             $this->issueOverstayFine($res['driver_id'], $res['spot_id'], $res['reservation_id'], $overstayMinutes, $penaltyAmount);
-            // Send overstay notification to driver
             require_once __DIR__ . '/Notification.php';
             $notif = new Notification();
             $notif->send(
@@ -230,7 +214,6 @@ class Reservation {
             );
         }
 
-        // Release escrow to owner
         $this->pricing->releaseEscrow($res['reservation_id']);
 
         return [
@@ -243,12 +226,6 @@ class Reservation {
 
     // ─── NON-CRUD: Cancellation with Tiered Refund ────────────
 
-    /**
-     * Calculates refund % based on how far cancellation is from booking start:
-     * >2 hours before: 100% refund
-     * 1-2 hours: 50% refund
-     * <1 hour: 0% refund
-     */
     public function cancelReservation(int $reservationId, int $driverId, string $reason = ''): array {
         $stmt = $this->db->prepare("SELECT * FROM reservations WHERE reservation_id = ? AND driver_id = ?");
         $stmt->execute([$reservationId, $driverId]);
@@ -261,9 +238,9 @@ class Reservation {
 
         $hoursUntilStart = (strtotime($res['start_time']) - time()) / 3600;
 
-        if ($hoursUntilStart > 2)     $refundPct = 1.00;  // 100%
-        elseif ($hoursUntilStart > 1) $refundPct = 0.50;  // 50%
-        else                          $refundPct = 0.00;  // 0%
+        if ($hoursUntilStart > 2)     $refundPct = 1.00;
+        elseif ($hoursUntilStart > 1) $refundPct = 0.50;
+        else                          $refundPct = 0.00;
 
         $refundAmount = round($res['total_amount'] * $refundPct, 2);
 
@@ -274,7 +251,6 @@ class Reservation {
         ");
         $stmt->execute([$reason, $refundAmount, $reservationId]);
 
-        // Process refund
         if ($refundAmount > 0) {
             $this->pricing->processRefund($reservationId, $refundAmount);
         }
@@ -289,10 +265,6 @@ class Reservation {
 
     // ─── NON-CRUD: Instant Extension ─────────────────────────
 
-    /**
-     * Allows driver to extend stay if next slot is free.
-     * Checks buffer time + no conflict.
-     */
     public function extendReservation(int $reservationId, int $extraMinutes, int $driverId): array {
         $stmt = $this->db->prepare("SELECT * FROM reservations WHERE reservation_id = ? AND driver_id = ? AND status = 'active'");
         $stmt->execute([$reservationId, $driverId]);
@@ -302,19 +274,16 @@ class Reservation {
 
         $newEnd = date('Y-m-d H:i:s', strtotime($res['end_time']) + $extraMinutes * 60);
 
-        // Check if next slot is free (including buffer)
         $bufferedNewEnd = date('Y-m-d H:i:s', strtotime($newEnd) + self::BUFFER_MINUTES * 60);
         if ($this->hasConflictExcluding($res['spot_id'], $res['end_time'], $bufferedNewEnd, $reservationId)) {
             return ['success' => false, 'message' => 'Cannot extend: next time slot is already booked.'];
         }
 
-        // Calculate extra charge
         $extraCost = $this->pricing->calculateExtensionCost($res['spot_id'], $extraMinutes);
 
         $stmt = $this->db->prepare("UPDATE reservations SET end_time = ?, status = 'extended', total_amount = total_amount + ? WHERE reservation_id = ?");
         $stmt->execute([$newEnd, $extraCost, $reservationId]);
 
-        // Record the extension charge as a new transaction in escrow
         $this->pricing->lockEscrow($reservationId, $driverId, $extraCost);
 
         return [
@@ -327,15 +296,10 @@ class Reservation {
 
     // ─── NON-CRUD: Recurring / Subscription Booking ──────────
 
-    /**
-     * Creates recurring weekly reservations (Mon-Fri or custom days).
-     * Bulk discount applied for weekly bookings.
-     */
     public function createRecurringReservation(array $data, array $daysOfWeek, int $weeks = 4): array {
         $createdIds = [];
         $baseStart  = new DateTime($data['start_time']);
         $baseEnd    = new DateTime($data['end_time']);
-        $discount   = 0.10; // 10% bulk discount for recurring
 
         $this->db->beginTransaction();
         try {
@@ -346,7 +310,6 @@ class Reservation {
                     $start->modify("+{$week} week");
                     $end->modify("+{$week} week");
 
-                    // Adjust to correct day
                     $currentDay = (int)$start->format('N');
                     $diff       = $dayNum - $currentDay;
                     if ($diff !== 0) {
@@ -374,9 +337,6 @@ class Reservation {
 
     // ─── NON-CRUD: No-Show Auto Check ────────────────────────
 
-    /**
-     * Cron-job-ready: marks confirmed reservations as no-show after grace period.
-     */
     public function processNoShows(): int {
         $graceEnd = date('Y-m-d H:i:s', time() - self::GRACE_MINUTES * 60);
         $stmt     = $this->db->prepare("
@@ -421,7 +381,6 @@ class Reservation {
     private function issueOverstayFine(int $driverId, int $spotId, int $reservationId, int $minutes, float $amount): void {
         $stmt = $this->db->prepare("INSERT INTO fines (driver_id, spot_id, reservation_id, fine_type, amount, overstay_minutes) VALUES (?,?,?,'overstay',?,?)");
         $stmt->execute([$driverId, $spotId, $reservationId, $amount, $minutes]);
-        // Update driver's unpaid fines count
         $stmt = $this->db->prepare("UPDATE users SET unpaid_fines_count = unpaid_fines_count + 1 WHERE user_id = ?");
         $stmt->execute([$driverId]);
     }

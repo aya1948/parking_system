@@ -77,9 +77,6 @@ require_once __DIR__ . '/../includes/header.php';
 .stat-card.border-danger {
     border-left-color: #dc3545 !important;
 }
-.stat-card.border-warning {
-    border-left-color: #ffc107 !important;
-}
 
 /* رؤوس الكروت */
 .card-header {
@@ -108,7 +105,7 @@ require_once __DIR__ . '/../includes/header.php';
 
   <!-- STAT CARDS -->
   <div class="row g-3 mb-4">
-    <div class="col-md-3">
+    <div class="col-md-4">
       <div class="card stat-card p-3">
         <div class="d-flex justify-content-between align-items-center">
           <div>
@@ -119,7 +116,7 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
       </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
       <div class="card stat-card p-3">
         <div class="d-flex justify-content-between align-items-center">
           <div>
@@ -130,7 +127,7 @@ require_once __DIR__ . '/../includes/header.php';
         </div>
       </div>
     </div>
-    <div class="col-md-3">
+    <div class="col-md-4">
       <div class="card stat-card border-danger p-3">
         <div class="d-flex justify-content-between align-items-center">
           <div>
@@ -138,17 +135,6 @@ require_once __DIR__ . '/../includes/header.php';
             <h3 class="fw-bold mb-0 text-danger"><?= count($unpaidFines) ?></h3>
           </div>
           <i class="bi bi-exclamation-triangle fs-2 text-danger opacity-50"></i>
-        </div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="card stat-card border-warning p-3">
-        <div class="d-flex justify-content-between align-items-center">
-          <div>
-            <p class="text-muted small mb-1">Loyalty Points</p>
-            <h3 class="fw-bold mb-0 text-warning"><?= $user['loyalty_points'] ?></h3>
-          </div>
-          <i class="bi bi-star fs-2 text-warning opacity-50"></i>
         </div>
       </div>
     </div>
